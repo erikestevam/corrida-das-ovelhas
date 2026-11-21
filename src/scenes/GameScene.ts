@@ -18,6 +18,7 @@ export class GameScene extends Phaser.Scene {
 
   // Parallax elements
   private sun!: Phaser.GameObjects.Image;
+  private rainbow!: Phaser.GameObjects.Image;
   private clouds: Phaser.GameObjects.Image[] = [];
   private hillBack!: Phaser.GameObjects.TileSprite;
   private hillMid!: Phaser.GameObjects.TileSprite;
@@ -91,11 +92,50 @@ export class GameScene extends Phaser.Scene {
     this.setupControls();
 
     // 8. Camera follow setup
-    this.cameras.main.startFollow(this.shepherd, true, 0.1, 0.1, -160, 40);
+    this.cameras.main.startFollow(this.shepherd, true, 0.1, 0.1, -width * 0.22, 40);
     this.cameras.main.setBackgroundColor('#87ceeb');
     this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, height);
 
+    // Dynamic resize handler
+    this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
+      this.handleResize(gameSize.width, gameSize.height);
+    });
+
     this.lastInteractionTime = this.time.now;
+  }
+
+  private handleResize(width: number, height: number): void {
+    this.groundHeight = height - 90;
+    if (this.sun) this.sun.setPosition(width * 0.82, height * 0.22);
+    if (this.rainbow) this.rainbow.setPosition(width * 0.45, height * 0.42);
+
+    if (this.hillBack) {
+      this.hillBack.setPosition(0, height - 130).setSize(width * 2, 160);
+    }
+    if (this.hillMid) {
+      this.hillMid.setPosition(0, height - 120).setSize(width * 2, 160);
+    }
+    if (this.hillFore) {
+      this.hillFore.setPosition(0, height - 105).setSize(width * 2, 160);
+    }
+
+    if (this.groundGroup) {
+      this.groundGroup.getChildren().forEach((child) => {
+        const tile = child as Phaser.Physics.Arcade.Sprite;
+        tile.setY(this.groundHeight);
+        tile.refreshBody();
+      });
+    }
+
+    if (this.shepherd && this.shepherd.body) {
+      const body = this.shepherd.body as Phaser.Physics.Arcade.Body;
+      if (body.blocked.down || body.touching.down) {
+        this.shepherd.setY(this.groundHeight - 75);
+      }
+    }
+
+    this.cameras.main.setFollowOffset(-width * 0.22, 40);
+    this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, height);
   }
 
   // =========================================================================
@@ -103,7 +143,7 @@ export class GameScene extends Phaser.Scene {
   // =========================================================================
   private createBackground(width: number, height: number): void {
     // Rainbow Arc in distance
-    this.add.image(width * 0.45, height * 0.42, 'rainbow')
+    this.rainbow = this.add.image(width * 0.45, height * 0.42, 'rainbow')
       .setScrollFactor(0.04)
       .setScale(1.2);
 
