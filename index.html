@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>O Bom Pastor: Corrida das Ovelhinhas</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#4ade80" />
+    <!-- Google Fonts: Fredoka & Baloo 2 for child-friendly bubbly typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- Game Viewport for Phaser -->
+    <div id="game-container"></div>
+
+    <!-- HTML / Motion UI Overlay -->
+    <div id="ui-container">
+      <!-- Top HUD Header (Active during gameplay) -->
+      <header id="top-hud" class="hud hidden">
+        <div class="hud-left">
+          <div class="sheep-counter-pill">
+            <span class="sheep-icon-pill">🐑</span>
+            <span id="hud-sheep-count" class="hud-number">0</span>
+            <span class="hud-total">/ 10</span>
+          </div>
+          <!-- 10 Little Sheep Progress Badges -->
+          <div id="sheep-progress-track" class="progress-track">
+            <!-- 10 slots populated by JS -->
+          </div>
+        </div>
+        <div class="hud-right">
+          <div class="star-pill">
+            <span class="star-icon-pill">⭐</span>
+            <span id="hud-star-count" class="hud-number">0</span>
+          </div>
+          <button id="btn-audio-toggle" class="btn-icon" aria-label="Alternar Som" title="Som">
+            <span id="audio-icon">🔊</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Start Screen Overlay -->
+      <section id="start-screen" class="overlay-screen active">
+        <div class="start-card">
+          <div class="sun-header-badge">☀️</div>
+          <h1 class="game-title">
+            <span class="title-sub">O BOM PASTOR</span>
+            <span class="title-main">Corrida das Ovelhinhas! 🐑🌈</span>
+          </h1>
+          <p class="game-subtitle">
+            Toque na tela para pular, resgatar as ovelhinhas e aprender a contar!
+          </p>
+          <div class="play-btn-wrapper">
+            <button id="btn-play" class="btn-giant-play" aria-label="Começar a Correr">
+              <span class="play-icon">▶</span>
+              <span class="play-text">JOGAR!</span>
+            </button>
+          </div>
+          <div class="start-tip">
+            <span>✨ Sem perdedores • 1 Toque para Pular • 100% Diversão ✨</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3, 2, 1, JÁ! Countdown Overlay -->
+      <div id="countdown-overlay" class="countdown-overlay hidden">
+        <div id="countdown-text" class="countdown-bounce">3</div>
+      </div>
+
+      <!-- Giant Sheep Number Pop-up -->
+      <div id="number-popup-container" class="number-popup-container hidden">
+        <div id="number-popup-card" class="number-popup-card">
+          <span id="number-popup-digit" class="number-popup-digit">1</span>
+          <span id="number-popup-label" class="number-popup-label">Ovelhinha!</span>
+        </div>
+      </div>
+
+      <!-- Inactivity Finger Guide (Assistance for toddler) -->
+      <div id="inactivity-guide" class="inactivity-guide hidden">
+        <div class="finger-pointer-wrapper">
+          <div class="ripple-ring"></div>
+          <div class="finger-icon">👆</div>
+        </div>
+        <div class="finger-bubble">Toca aqui para pular!</div>
+      </div>
+
+      <!-- Victory Celebration Screen -->
+      <section id="victory-screen" class="overlay-screen hidden">
+        <div class="victory-card">
+          <div class="victory-crown">👑</div>
+          <h2 class="victory-title">PARABÉNS! 🎉</h2>
+          <p class="victory-praise">
+            Você resgatou todas as 10 ovelhinhas!<br />
+            <strong>O Bom Pastor está muito feliz com você!</strong>
+          </p>
+          <div class="victory-sheep-parade">
+            <span class="parade-sheep s1">🐑</span>
+            <span class="parade-shepherd">👦🌾</span>
+            <span class="parade-sheep s2">🐑</span>
+          </div>
+          <div class="victory-stars-row">
+            <span class="star-badge">⭐</span>
+            <span class="star-badge big">🌟</span>
+            <span class="star-badge">⭐</span>
+          </div>
+          <button id="btn-restart" class="btn-giant-play victory-btn">
+            <span class="play-icon">🔁</span>
+            <span class="play-text">CORRER DE NOVO!</span>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
