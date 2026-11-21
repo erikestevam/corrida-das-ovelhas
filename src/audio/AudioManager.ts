@@ -16,16 +16,16 @@ class AudioManager {
 
   // Howler cache for custom recorded files
   private howlerCache: Map<string, Howl> = new Map();
-  private availableAudioFiles: Set<string> = new Set();
+  private currentVoiceSound: Howl | null = null;
 
-  // Voice synthesis
+  // Voice synthesis fallback
   private speechVoice: SpeechSynthesisVoice | null = null;
   private lastSpokenText: string = '';
   private lastSpokenTime: number = 0;
 
   constructor() {
     this.setupSpeechVoices();
-    this.checkCustomAudioFiles();
+    this.preloadAudioFiles();
   }
 
   /**
@@ -143,8 +143,10 @@ class AudioManager {
   public toggleMute(): boolean {
     this.isMuted = !this.isMuted;
     Tone.Destination.mute = this.isMuted;
+    Howler.mute(this.isMuted);
     if (this.isMuted) {
       window.speechSynthesis?.cancel();
+      this.currentVoiceSound?.stop();
     }
     return this.isMuted;
   }
@@ -260,60 +262,72 @@ class AudioManager {
   }
 
   /**
-   * Check if any custom audio files exist in /public/audio/
+   * Preload high-quality natural voice audio files from /public/audio/
    */
-  private checkCustomAudioFiles(): void {
-    const commonKeys = [
+  private preloadAudioFiles(): void {
+    const keys = [
       'vamos-correr', 'largada-3', 'largada-2', 'largada-1', 'largada-ja',
       'pula', 'turbo', 'surpresa', 'ops', 'toca', 'parabens',
-      ...Array.from({ length: 10 }, (_, i) => `num-${i + 1}`)
+      ...Array.from({ length: 40 }, (_, i) => `num-${i + 1}`)
     ];
 
-    commonKeys.forEach(key => {
-      const path = `/audio/${key}.mp3`;
-      fetch(path, { method: 'HEAD' })
-        .then(res => {
-          if (res.ok && res.status === 200) {
-            this.availableAudioFiles.add(key);
-            const sound = new Howl({ src: [path], preload: true });
-            this.howlerCache.set(key, sound);
-          }
-        })
-        .catch(() => {
-          // File does not exist, use Web Speech API fallback
-        });
+    keys.forEach(key => {
+      const sound = new Howl({
+        src: [`/audio/${key}.mp3`],
+        preload: true,
+        html5: false, // Web Audio API for fast zero-latency triggering
+        volume: 1.0
+      });
+      this.howlerCache.set(key, sound);
     });
   }
 
   /**
-   * Speak text with enthusiastic child-friendly Portuguese voice
+   * Speak text with enthusiastic child-friendly voice (Howler MP3 first, Web Speech API fallback)
    */
   public speak(key: string, text: string, immediate: boolean = true): void {
     if (this.isMuted) return;
 
-    // Prevent identical speech triggers within 1 second
+    // Prevent duplicate speech triggers within 800ms
     const now = Date.now();
-    if (this.lastSpokenText === text && now - this.lastSpokenTime < 1000) {
+    if (this.lastSpokenText === text && now - this.lastSpokenTime < 800) {
       return;
     }
     this.lastSpokenText = text;
     this.lastSpokenTime = now;
 
-    // 1. If custom MP3 exists in /public/audio/, play with Howler
-    if (this.availableAudioFiles.has(key)) {
-      const customSound = this.howlerCache.get(key);
-      if (customSound) {
-        customSound.play();
-        return;
+    // Cancel any synthetic browser voice
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    // 1. Play high-quality neural voice MP3 via Howler
+    let sound = this.howlerCache.get(key);
+    if (!sound) {
+      try {
+        sound = new Howl({
+          src: [`/audio/${key}.mp3`],
+          preload: true,
+          html5: false,
+          volume: 1.0
+        });
+        this.howlerCache.set(key, sound);
+      } catch (e) {
+        // Fallback
       }
     }
 
-    // 2. Otherwise use Web Speech API in pt-BR
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      if (immediate) {
-        window.speechSynthesis.cancel();
+    if (sound) {
+      if (immediate && this.currentVoiceSound && this.currentVoiceSound.playing()) {
+        this.currentVoiceSound.stop();
       }
+      this.currentVoiceSound = sound;
+      sound.play();
+      return;
+    }
 
+    // 2. Fallback to Web Speech API in pt-BR if MP3 is unavailable
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'pt-BR';
       utterance.rate = 1.05; // Lively pace
