@@ -1,18 +1,26 @@
-# 🐑 O Bom Pastor: Corrida das Ovelhinhas 🌈
+# 🐑 O Bom Pastor: Corrida das Ovelhinhas 3D 🌈
 
-Jogo web educativo e cristão estilo **Endless Runner de 1 Botão**, inspirado na energia e dinamismo de *Mario Kart* e *Super Mario Run*, projetado especialmente para crianças pequenas e bebês em fase de introdução aos jogos eletrônicos, jogando **principalmente no celular**.
+Jogo web educativo e cristão estilo **Endless Runner 3D de 1 Botão**, inspirado na energia vibrante de *Mario Kart*, *Minion Rush* e *Super Mario 3D World*, projetado especialmente para crianças pequenas e bebês em fase de introdução aos jogos eletrônicos, jogando **principalmente no celular**.
 
 ---
 
 ## 🎯 Conceito e Pilares
 
-1. **Tema Bíblico e Educativo:**
+1. **Gráficos 100% 3D com Iluminação e Sombras Suaves:**
+   - Todo o mundo, o pastorzinho, as ovelhas, as estrelas e a pista são **modelos 3D com iluminação solar e sombras em tempo real** (`Three.js` + `PCFSoftShadowMap`).
+   - Cores cartoon quentes e vibrantes com estética amigável para crianças.
+
+2. **Dois Modos de Câmera (Alternáveis em Tempo Real pelo botão 🎥):**
+   - **Câmera em 3ª Pessoa (Atrás do Personagem):** Estilo *Mario Kart* e *Minion Rush*, onde o pastorzinho corre para a frente em direção ao horizonte com ovelhinhas saltitando na pista. Ideal para jogar no celular em modo vertical (retrato).
+   - **Câmera 2.5D Lateral Isométrica:** Estilo *Super Mario 3D World* e *Kirby*, com uma visão elevada e angular da corrida pelas colinas.
+
+3. **Tema Bíblico e Educativo:**
    - O jogador controla o alegre **Bom Pastor** correndo por colinas floridas sob um arco-íris e sol sorridente.
    - O objetivo é resgatar até **10 ovelhinhas** perdidas e coletar estrelas pelo caminho.
    - Cada ovelhinha resgatada dispara um **número gigante e colorido** com física de mola (*spring*) e a voz narra alegremente em português: *"Um!"*, *"Dois!"*, *"Três!"* até *"Dez!"*.
-   - Ao completar as 10 ovelhas, ocorre uma grande festa de vitória com chuva de confetes, estrelas e comemoração.
+   - Ao completar as 10 ovelhas, acontece uma grande festa de vitória com chuva de confetes, estrelas e comemoração.
 
-2. **Filosofia "Zero Frustração":**
+4. **Filosofia "Zero Frustração":**
    - **SEM GAME OVER e SEM CRONÔMETRO:** Tocar em um obstáculo (pedrinha sorridente, arbusto macio ou poça d'água) **não mata** e **não tira pontos**. O pastorzinho dá um pulinho engraçado, pisca por 1 segundo e continua correndo enquanto a voz incentiva (*"Ops! Pulinho!"*).
    - **Controle de 1 Toque:** Tocar em qualquer lugar da tela (ou qualquer tecla no teclado) faz o personagem pular.
    - **Pulo Duplo:** Permite tocar uma segunda vez no ar para dar um pulinho extra suave.
@@ -20,17 +28,17 @@ Jogo web educativo e cristão estilo **Endless Runner de 1 Botão**, inspirado n
    - **Coyote Time e Jump Buffering (160ms):** Tolerância generosa para que a criança nunca sinta que o toque falhou.
    - **Dica por Inatividade:** Se a criança hesitar antes de um obstáculo, surge um dedinho animado pulsando com o áudio *"Toca na tela para pular!"*.
 
-3. **Elementos Dinâmicos Estilo Mario Kart:**
+5. **Elementos Dinâmicos Estilo Mario Kart:**
    - **Largada:** Contagem *"3... 2... 1... JÁ!"* com bipes sintetizados e animação de mola.
-   - **Rampas de Turbo Arco-Íris:** Dão um super impulso de velocidade por 2,5 segundos, com rastro de arco-íris, confetes e som acelerado.
-   - **Caixas Surpresa (?):** Ao pular nelas, soltam uma chuva de estrelas douradas e confetes.
+   - **Rampas de Turbo Arco-Íris 3D:** Dão um super impulso de velocidade por 2,5 segundos, com rastro de arco-íris, confetes e som acelerado.
+   - **Caixas Surpresa (?) 3D:** Ao pular nelas, soltam uma chuva de estrelas douradas e confetes.
 
 ---
 
 ## 🛠️ Stack Tecnológica
 
+- **Three.js (`three`):** Motor 3D WebGL com sombras em tempo real, materiais estilizados cartoon, renderização a 60 FPS no celular e transições suaves de câmera.
 - **Vite + TypeScript:** Ambiente rápido, modular e tipado.
-- **Phaser 3 (`phaser`):** Motor 2D com Arcade Physics para corrida contínua, pulos, rampas de turbo e 3 camadas de cenário em parallax.
 - **Motion (`motion`):** Animações fluidas com física de mola no botão de Play, contagem regressiva, pop-up gigante dos números e tela de vitória.
 - **Tone.js (`tone`):** Síntese procedural de efeitos sonoros em tempo real (bipes de largada, som de mola "boing", escala musical pentatônica crescente C5-C7 a cada ovelhinha, whoosh de turbo e fanfarra de vitória).
 - **Howler.js (`howler`):** Gerenciador de áudio pronto para reproduzir arquivos MP3 reais da voz dos pais/professores gravados na pasta `public/audio/`.
@@ -49,7 +57,7 @@ Jogo web educativo e cristão estilo **Endless Runner de 1 Botão**, inspirado n
    ```text
    ➜  Network: http://192.168.3.17:5173/
    ```
-3. No celular (conectado na mesma rede Wi-Fi que o computador), abra o navegador (Chrome ou Safari) e digite o endereço exibido (ex: `http://192.168.3.17:5173/`).
+3. No celular (conectado na mesma rede Wi-Fi que o computador), abra o navegador (Chrome ou Safari) e digite o endereço exibido.
 4. **Instalar como Aplicativo (Tela Cheia):**
    - **No Android (Chrome):** Toque no menu de 3 pontinhos no canto superior e selecione **"Adicionar à tela inicial"** ou **"Instalar aplicativo"**.
    - **No iPhone/iPad (Safari):** Toque no botão de compartilhar (ícone com quadrado e seta para cima) e escolha **"Adicionar à Tela de Início"**.

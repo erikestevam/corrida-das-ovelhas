@@ -9,6 +9,7 @@ export class OverlayUI {
   private btnPlay = document.getElementById('btn-play') as HTMLButtonElement;
   private btnRestart = document.getElementById('btn-restart') as HTMLButtonElement;
   private btnAudioToggle = document.getElementById('btn-audio-toggle') as HTMLButtonElement;
+  private btnCameraToggle = document.getElementById('btn-camera-toggle') as HTMLButtonElement;
   private audioIcon = document.getElementById('audio-icon') as HTMLElement;
 
   private hudSheepCount = document.getElementById('hud-sheep-count') as HTMLElement;
@@ -33,7 +34,7 @@ export class OverlayUI {
     this.createSheepSlots();
   }
 
-  public init(onStartGame: () => void, onRestartGame: () => void): void {
+  public init(onStartGame: () => void, onRestartGame: () => void, onToggleCamera?: () => void): void {
     // Animate Giant Play button breathing pulse with Motion
     if (this.btnPlay) {
       animate(
@@ -59,12 +60,26 @@ export class OverlayUI {
       });
     }
 
+    if (this.btnCameraToggle && onToggleCamera) {
+      this.btnCameraToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onToggleCamera();
+      });
+    }
+
     if (this.btnAudioToggle) {
       this.btnAudioToggle.addEventListener('click', (e) => {
         e.stopPropagation();
         const muted = audioManager.toggleMute();
         this.updateAudioIcon(muted);
       });
+    }
+  }
+
+  public updateCameraIcon(mode: 'chase' | 'isometric'): void {
+    const icon = document.getElementById('camera-icon');
+    if (icon) {
+      icon.textContent = mode === 'chase' ? '🏎️' : '📐';
     }
   }
 
