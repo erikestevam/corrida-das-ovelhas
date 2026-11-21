@@ -81,7 +81,7 @@ html, body {
   gap: 10px;
 }
 
-.sheep-counter-pill, .star-pill {
+.sheep-counter-pill, .star-pill, .timer-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -92,7 +92,21 @@ html, body {
   border: 3px solid #facc15;
 }
 
-.sheep-icon-pill, .star-icon-pill {
+.timer-pill {
+  border-color: #38bdf8;
+}
+
+.timer-pill.urgent {
+  border-color: #ef4444;
+  animation: pulseUrgent 0.6s infinite alternate;
+}
+
+@keyframes pulseUrgent {
+  0% { transform: scale(1); background: #ffffff; }
+  100% { transform: scale(1.08); background: #fee2e2; }
+}
+
+.sheep-icon-pill, .star-icon-pill, .timer-icon-pill {
   font-size: 1.4rem;
 }
 
@@ -508,10 +522,10 @@ html, body {
     height: 20px;
     font-size: 10px;
   }
-  .sheep-counter-pill, .star-pill {
+  .sheep-counter-pill, .star-pill, .timer-pill {
     padding: 4px 10px;
   }
-  .sheep-icon-pill, .star-icon-pill {
+  .sheep-icon-pill, .star-icon-pill, .timer-icon-pill {
     font-size: 1.15rem;
   }
   .hud-number {

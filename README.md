@@ -10,23 +10,20 @@ Jogo web educativo e cristão estilo **Endless Runner 3D de 1 Botão**, inspirad
    - Todo o mundo, o pastorzinho, as ovelhas, as estrelas e a pista são **modelos 3D com iluminação solar e sombras em tempo real** (`Three.js` + `PCFSoftShadowMap`).
    - Cores cartoon quentes e vibrantes com estética amigável para crianças.
 
-2. **Dois Modos de Câmera (Alternáveis em Tempo Real pelo botão 🎥):**
-   - **Câmera em 3ª Pessoa (Atrás do Personagem):** Estilo *Mario Kart* e *Minion Rush*, onde o pastorzinho corre para a frente em direção ao horizonte com ovelhinhas saltitando na pista. Ideal para jogar no celular em modo vertical (retrato).
-   - **Câmera 2.5D Lateral Isométrica:** Estilo *Super Mario 3D World* e *Kirby*, com uma visão elevada e angular da corrida pelas colinas.
+2. **Sistema de 3 Pistas e Câmera Elevada (Visão Clara dos Obstáculos):**
+   - A pista conta com **3 faixas bem sinalizadas** (Esquerda, Centro e Direita) com linhas tracejadas nítidas.
+   - Câmera elevada panorâmica que permite visualizar pedras, arbustos e ovelhas a dezenas de metros de distância.
+   - **Controle Intuitivo de Deslizar:** A criança arrasta o dedinho para a esquerda ou direita para mudar de pista (ou simplesmente toca no lado esquerdo/direito da tela).
+   - As ovelhinhas e estrelas ficam no nível do chão, facilitando o resgate sem depender de pulos difíceis.
 
-3. **Tema Bíblico e Educativo:**
-   - O jogador controla o alegre **Bom Pastor** correndo por colinas floridas sob um arco-íris e sol sorridente.
-   - O objetivo é resgatar até **10 ovelhinhas** perdidas e coletar estrelas pelo caminho.
-   - Cada ovelhinha resgatada dispara um **número gigante e colorido** com física de mola (*spring*) e a voz narra alegremente em português: *"Um!"*, *"Dois!"*, *"Três!"* até *"Dez!"*.
-   - Ao completar as 10 ovelhas, acontece uma grande festa de vitória com chuva de confetes, estrelas e comemoração.
+3. **Rodadas de 1 Minuto (Sem Limite de Ovelhas):**
+   - Cada rodada tem **1 minuto (60 segundos)** de corrida contínua com cronômetro animado no topo (`⏱️ 01:00`).
+   - A criança pode resgatar quantas ovelhas conseguir (10, 20, 30+ ovelhas!).
+   - Ao final do tempo, acontece uma grande festa de comemoração com chuva de confetes e a soma de todas as ovelhinhas e estrelas resgatadas.
 
 4. **Filosofia "Zero Frustração":**
-   - **SEM GAME OVER e SEM CRONÔMETRO:** Tocar em um obstáculo (pedrinha sorridente, arbusto macio ou poça d'água) **não mata** e **não tira pontos**. O pastorzinho dá um pulinho engraçado, pisca por 1 segundo e continua correndo enquanto a voz incentiva (*"Ops! Pulinho!"*).
-   - **Controle de 1 Toque:** Tocar em qualquer lugar da tela (ou qualquer tecla no teclado) faz o personagem pular.
-   - **Pulo Duplo:** Permite tocar uma segunda vez no ar para dar um pulinho extra suave.
-   - **Gravidade Flutuante e Confortável:** Gravidade suave que facilita pegar itens no ar.
-   - **Coyote Time e Jump Buffering (160ms):** Tolerância generosa para que a criança nunca sinta que o toque falhou.
-   - **Dica por Inatividade:** Se a criança hesitar antes de um obstáculo, surge um dedinho animado pulsando com o áudio *"Toca na tela para pular!"*.
+   - **SEM GAME OVER:** Encostar em uma pedrinha, arbusto ou poça dá apenas um pulinho engraçado de mola, pisca por 1 segundo e continua correndo sem interromper a partida.
+   - Pulo disponível ao tocar no centro da pista ou espaço no teclado.
 
 5. **Elementos Dinâmicos Estilo Mario Kart:**
    - **Largada:** Contagem *"3... 2... 1... JÁ!"* com bipes sintetizados e animação de mola.

@@ -14,7 +14,11 @@ export class OverlayUI {
 
   private hudSheepCount = document.getElementById('hud-sheep-count') as HTMLElement;
   private hudStarCount = document.getElementById('hud-star-count') as HTMLElement;
-  private progressTrack = document.getElementById('sheep-progress-track') as HTMLElement;
+  private hudTimer = document.getElementById('hud-timer') as HTMLElement;
+  private timerPill = document.querySelector('.timer-pill') as HTMLElement;
+
+  private victorySheepCount = document.getElementById('victory-sheep-count') as HTMLElement;
+  private victoryStarCount = document.getElementById('victory-star-count') as HTMLElement;
 
   private countdownOverlay = document.getElementById('countdown-overlay') as HTMLElement;
   private countdownText = document.getElementById('countdown-text') as HTMLElement;
@@ -26,13 +30,10 @@ export class OverlayUI {
   private inactivityGuide = document.getElementById('inactivity-guide') as HTMLElement;
   private victoryScreen = document.getElementById('victory-screen') as HTMLElement;
 
-  private sheepSlots: HTMLElement[] = [];
   private numberPopupTimeout: number | null = null;
   private isFingerGuideVisible: boolean = false;
 
-  constructor() {
-    this.createSheepSlots();
-  }
+  constructor() {}
 
   public init(onStartGame: () => void, onRestartGame: () => void, onToggleCamera?: () => void): void {
     // Animate Giant Play button breathing pulse with Motion
@@ -83,20 +84,6 @@ export class OverlayUI {
     }
   }
 
-  private createSheepSlots(): void {
-    if (!this.progressTrack) return;
-    this.progressTrack.innerHTML = '';
-    this.sheepSlots = [];
-
-    for (let i = 0; i < GAME_CONFIG.TOTAL_SHEEP_GOAL; i++) {
-      const slot = document.createElement('div');
-      slot.className = 'sheep-slot';
-      slot.textContent = '🐑';
-      this.progressTrack.appendChild(slot);
-      this.sheepSlots.push(slot);
-    }
-  }
-
   public showStartScreen(): void {
     this.startScreen.classList.remove('hidden');
     this.topHud.classList.add('hidden');
@@ -128,6 +115,20 @@ export class OverlayUI {
     this.topHud.classList.add('hidden');
   }
 
+  public updateTimer(seconds: number): void {
+    if (!this.hudTimer) return;
+    const s = Math.max(0, Math.ceil(seconds));
+    const mins = Math.floor(s / 60);
+    const secs = s % 60;
+    this.hudTimer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+    if (s <= 10 && s > 0) {
+      this.timerPill?.classList.add('urgent');
+    } else {
+      this.timerPill?.classList.remove('urgent');
+    }
+  }
+
   public updateSheepCount(count: number): void {
     if (this.hudSheepCount) {
       this.hudSheepCount.textContent = count.toString();
@@ -137,21 +138,6 @@ export class OverlayUI {
         { duration: 0.35, type: 'spring', bounce: 0.5 }
       );
     }
-
-    this.sheepSlots.forEach((slot, idx) => {
-      if (idx < count) {
-        if (!slot.classList.contains('filled')) {
-          slot.classList.add('filled');
-          animate(
-            slot,
-            { scale: [0.6, 1.4, 1.15] },
-            { duration: 0.45, type: 'spring', bounce: 0.6 }
-          );
-        }
-      } else {
-        slot.classList.remove('filled');
-      }
-    });
   }
 
   public updateStarCount(count: number): void {
@@ -168,7 +154,8 @@ export class OverlayUI {
   public resetHud(): void {
     if (this.hudSheepCount) this.hudSheepCount.textContent = '0';
     if (this.hudStarCount) this.hudStarCount.textContent = '0';
-    this.sheepSlots.forEach(slot => slot.classList.remove('filled'));
+    if (this.hudTimer) this.hudTimer.textContent = '01:00';
+    this.timerPill?.classList.remove('urgent');
   }
 
   public updateAudioIcon(muted: boolean): void {
@@ -220,7 +207,7 @@ export class OverlayUI {
   }
 
   // =========================================================================
-  // GIANT SHEEP NUMBER POP-UP (1 to 10)
+  // GIANT SHEEP NUMBER POP-UP (Any number: 1, 2, ... 25+)
   // =========================================================================
   public showNumberPopup(count: number): void {
     if (this.numberPopupTimeout) {
@@ -245,10 +232,10 @@ export class OverlayUI {
     );
 
     // Speak enthusiastic number
-    const voiceText = GAME_CONFIG.VOICE_LINES.NUMBERS[count - 1] || `${count}!`;
+    const voiceText = count === 1 ? 'Uma ovelhinha!' : `${count} ovelhinhas!`;
     audioManager.speak(`num-${count}`, voiceText, true);
 
-    // Auto dismiss after 1.3s
+    // Auto dismiss after 1.2s
     this.numberPopupTimeout = window.setTimeout(() => {
       animate(
         this.numberPopupContainer,
@@ -257,7 +244,7 @@ export class OverlayUI {
       ).then(() => {
         this.numberPopupContainer.classList.add('hidden');
       });
-    }, 1300);
+    }, 1200);
   }
 
   // =========================================================================
@@ -274,7 +261,7 @@ export class OverlayUI {
       { duration: 0.4, type: 'spring', bounce: 0.5 }
     );
 
-    audioManager.speak('toca', GAME_CONFIG.VOICE_LINES.INACTIVITY_HINT);
+    audioManager.speak('toca', 'Arraste para os lados para pegar as ovelhinhas!');
   }
 
   public hideInactivityGuide(): void {
@@ -291,9 +278,12 @@ export class OverlayUI {
   }
 
   // =========================================================================
-  // VICTORY CELEBRATION (At 10 Sheep)
+  // VICTORY CELEBRATION (End of 1-minute round)
   // =========================================================================
-  public showVictoryScreen(): void {
+  public showVictoryScreen(totalSheep: number = 0, totalStars: number = 0): void {
+    if (this.victorySheepCount) this.victorySheepCount.textContent = totalSheep.toString();
+    if (this.victoryStarCount) this.victoryStarCount.textContent = totalStars.toString();
+
     this.victoryScreen.classList.remove('hidden');
 
     const card = this.victoryScreen.querySelector('.victory-card') as HTMLElement;
@@ -307,7 +297,10 @@ export class OverlayUI {
 
     // Play triumphant audio & voice
     audioManager.playVictory();
-    audioManager.speak('parabens', GAME_CONFIG.VOICE_LINES.VICTORY, true);
+    const praise = totalSheep === 1
+      ? `Parabéns! Você resgatou uma ovelhinha!`
+      : `Parabéns! Você resgatou ${totalSheep} ovelhinhas e pegou ${totalStars} estrelas!`;
+    audioManager.speak('parabens', praise, true);
 
     // Celebration fireworks & confetti rain!
     this.triggerVictoryFireworks();
@@ -364,4 +357,3 @@ export class OverlayUI {
 }
 
 export const overlayUI = new OverlayUI();
-

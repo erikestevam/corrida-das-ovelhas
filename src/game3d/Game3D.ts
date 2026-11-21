@@ -29,6 +29,11 @@ export class Game3D {
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
 
+  // 3-Lane configuration
+  private readonly LANE_POSITIONS = [-1.75, 0, 1.75]; // Left (-1), Center (0), Right (+1)
+  private currentLane: number = 0; // -1, 0, 1
+  private targetX: number = 0;
+
   // Camera settings
   private cameraMode: CameraViewMode = 'chase';
   private currentCamPos = new THREE.Vector3();
@@ -48,17 +53,17 @@ export class Game3D {
   private shepherdZ: number = 0;
   private shepherdX: number = 0;
 
-  // Physics & Mechanics
+  // Physics, Mechanics & 1-Minute Timer
   private isGameActive: boolean = false;
   private isTurbo: boolean = false;
   private turboTimer: number | null = null;
   private isInvulnerable: boolean = false;
   private jumpsLeft: number = 2;
-  private wasOnGround: boolean = true;
   private lastOnGroundTime: number = 0;
   private lastJumpRequestTime: number = 0;
   private lastInteractionTime: number = 0;
 
+  private roundTimeRemaining: number = 60.0; // 1 minute per round
   private sheepCount: number = 0;
   private starCount: number = 0;
 
@@ -66,7 +71,7 @@ export class Game3D {
   private chunks: TrackChunk[] = [];
   private entities: ActiveEntity[] = [];
   private nextChunkZ: number = 0;
-  private nextEntityZ: number = -15;
+  private nextEntityZ: number = -14;
 
   // Animation Loop
   private clock = new THREE.Clock();
@@ -85,7 +90,6 @@ export class Game3D {
   }
 
   private initThree(): void {
-    // Clear container of any previous canvas
     this.container.innerHTML = '';
 
     this.scene = new THREE.Scene();
@@ -93,7 +97,7 @@ export class Game3D {
     this.scene.fog = new THREE.Fog(0x87ceeb, 45, 95);
 
     const aspect = this.container.clientWidth / this.container.clientHeight;
-    this.camera = new THREE.PerspectiveCamera(58, aspect, 0.1, 150);
+    this.camera = new THREE.PerspectiveCamera(56, aspect, 0.1, 160);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
@@ -107,26 +111,26 @@ export class Game3D {
   }
 
   private createLightsAndSky(): void {
-    // Ambient soft skylight
-    const ambient = new THREE.AmbientLight(0xfff7ed, 0.7);
+    // Ambient soft warm skylight
+    const ambient = new THREE.AmbientLight(0xfff7ed, 0.75);
     this.scene.add(ambient);
 
     // Hemisphere sky/ground light
-    const hemiLight = new THREE.HemisphereLight(0xbae6fd, 0x4ade80, 0.6);
+    const hemiLight = new THREE.HemisphereLight(0xbae6fd, 0x4ade80, 0.65);
     this.scene.add(hemiLight);
 
     // Warm Directional Sunlight with Soft Shadows
-    this.sunLight = new THREE.DirectionalLight(0xffedd5, 1.3);
-    this.sunLight.position.set(15, 25, 20);
+    this.sunLight = new THREE.DirectionalLight(0xffedd5, 1.35);
+    this.sunLight.position.set(16, 26, 20);
     this.sunLight.castShadow = true;
     this.sunLight.shadow.mapSize.width = 1024;
     this.sunLight.shadow.mapSize.height = 1024;
     this.sunLight.shadow.camera.near = 0.5;
-    this.sunLight.shadow.camera.far = 80;
-    this.sunLight.shadow.camera.left = -15;
-    this.sunLight.shadow.camera.right = 15;
-    this.sunLight.shadow.camera.top = 15;
-    this.sunLight.shadow.camera.bottom = -15;
+    this.sunLight.shadow.camera.far = 85;
+    this.sunLight.shadow.camera.left = -16;
+    this.sunLight.shadow.camera.right = 16;
+    this.sunLight.shadow.camera.top = 16;
+    this.sunLight.shadow.camera.bottom = -16;
     this.sunLight.shadow.bias = -0.0005;
     this.scene.add(this.sunLight);
 
@@ -164,10 +168,13 @@ export class Game3D {
 
     this.shepherdZ = 0;
     this.shepherdY = 0;
+    this.shepherdX = 0;
+    this.currentLane = 0;
+    this.targetX = 0;
   }
 
   // =========================================================================
-  // TRACK CHUNKS & RUNWAY
+  // 3-LANE TRACK CHUNKS WITH MARKERS
   // =========================================================================
   private createTrackChunk(zPos: number, length: number = 30): TrackChunk {
     const chunkGroup = new THREE.Group();
@@ -185,11 +192,11 @@ export class Game3D {
     groundMesh.receiveShadow = true;
     chunkGroup.add(groundMesh);
 
-    // 2. Cobblestone / Dirt Track
-    const trackGeo = new THREE.PlaneGeometry(3.6, length);
+    // 2. 3-Lane Pathway (Width = 5.6 for 3 spacious lanes)
+    const trackGeo = new THREE.PlaneGeometry(5.6, length);
     const trackMat = new THREE.MeshStandardMaterial({
       color: 0xfef08a,
-      roughness: 0.8
+      roughness: 0.82
     });
     const trackMesh = new THREE.Mesh(trackGeo, trackMat);
     trackMesh.rotation.x = -Math.PI * 0.5;
@@ -197,18 +204,31 @@ export class Game3D {
     trackMesh.receiveShadow = true;
     chunkGroup.add(trackMesh);
 
-    // 3. Side Grass Trim curbs
-    const curbGeo = new THREE.BoxGeometry(0.3, 0.08, length);
+    // 3. Lane Dividers (Dashed lines dividing the 3 lanes at X = -0.88 and X = +0.88)
+    const dashMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75 });
+    for (let z = -2; z > -length; z -= 3.8) {
+      const dashGeo = new THREE.PlaneGeometry(0.14, 1.8);
+      const dash1 = new THREE.Mesh(dashGeo, dashMat);
+      dash1.rotation.x = -Math.PI * 0.5;
+      dash1.position.set(-0.88, 0.015, z);
+
+      const dash2 = dash1.clone();
+      dash2.position.x = 0.88;
+      chunkGroup.add(dash1, dash2);
+    }
+
+    // 4. Side Grass Trim curbs
+    const curbGeo = new THREE.BoxGeometry(0.3, 0.09, length);
     const curbMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.7 });
     const leftCurb = new THREE.Mesh(curbGeo, curbMat);
-    leftCurb.position.set(-1.85, 0.04, -length * 0.5);
+    leftCurb.position.set(-2.85, 0.045, -length * 0.5);
     leftCurb.receiveShadow = true;
 
     const rightCurb = leftCurb.clone();
-    rightCurb.position.x = 1.85;
+    rightCurb.position.x = 2.85;
     chunkGroup.add(leftCurb, rightCurb);
 
-    // 4. Colorful 3D Wildflowers on sides
+    // 5. Colorful 3D Wildflowers on sides
     const flowerColors = [0xf43f5e, 0xfbbf24, 0x38bdf8, 0xffffff];
     const flowerGeo = new THREE.SphereGeometry(0.12, 6, 6);
 
@@ -217,13 +237,13 @@ export class Game3D {
       const fMat = new THREE.MeshBasicMaterial({ color: col });
       const flower = new THREE.Mesh(flowerGeo, fMat);
       const side = Math.random() > 0.5 ? 1 : -1;
-      const x = side * (2.4 + Math.random() * 3.5);
+      const x = side * (3.3 + Math.random() * 3.5);
       const z = -Math.random() * length;
       flower.position.set(x, 0.1, z);
       chunkGroup.add(flower);
     }
 
-    // 5. Background Rolling 3D Hills
+    // 6. Background Rolling 3D Hills
     const hillMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.95 });
     const hill1 = new THREE.Mesh(new THREE.SphereGeometry(8, 12, 12), hillMat);
     hill1.scale.set(1.5, 0.55, 1.2);
@@ -244,7 +264,6 @@ export class Game3D {
   }
 
   private createInitialTrack(): void {
-    // Generate initial safe track chunks (starts at z=15 back to -75)
     this.nextChunkZ = 15;
     for (let i = 0; i < 4; i++) {
       const chunk = this.createTrackChunk(this.nextChunkZ, 30);
@@ -254,7 +273,7 @@ export class Game3D {
   }
 
   // =========================================================================
-  // CAMERA VIEW & INTERPOLATION
+  // CAMERA VIEW & ELEVATED PERSPECTIVE (Clear Forward View of All 3 Lanes)
   // =========================================================================
   public setCameraMode(mode: CameraViewMode): void {
     this.cameraMode = mode;
@@ -275,17 +294,18 @@ export class Game3D {
     let targetLookAt = new THREE.Vector3();
 
     if (this.cameraMode === 'chase') {
-      // 3ª Pessoa atrás (Mario Kart / Minion Rush)
-      targetPos.set(pX * 0.4, pY * 0.5 + 3.2, pZ + 6.2);
-      targetLookAt.set(pX * 0.2, pY * 0.3 + 1.3, pZ - 8.0);
+      // 3ª Pessoa Elevada Atrás (Mario Kart / Minion Rush)
+      // Raised camera angle (Y=4.8) gives clear top-down view of all 3 lanes ahead!
+      targetPos.set(pX * 0.35, pY * 0.4 + 4.6, pZ + 7.6);
+      targetLookAt.set(pX * 0.15, pY * 0.2 + 0.9, pZ - 13.0);
     } else {
       // 2.5D Lateral Isométrica (Super Mario 3D World / Kirby)
-      targetPos.set(pX + 6.2, pY * 0.6 + 4.2, pZ + 4.4);
-      targetLookAt.set(pX, pY * 0.4 + 1.1, pZ - 2.8);
+      targetPos.set(pX + 6.6, pY * 0.5 + 4.8, pZ + 4.8);
+      targetLookAt.set(pX * 0.5, pY * 0.3 + 1.1, pZ - 3.5);
     }
 
     // Smooth camera glide
-    const lerpFactor = Math.min(delta * 6.5, 1.0);
+    const lerpFactor = Math.min(delta * 7.0, 1.0);
     this.currentCamPos.lerp(targetPos, lerpFactor);
     this.currentCamLookAt.lerp(targetLookAt, lerpFactor);
 
@@ -293,7 +313,7 @@ export class Game3D {
     this.camera.lookAt(this.currentCamLookAt);
 
     // Keep sunlight moving forward with player for persistent crisp shadows
-    this.sunLight.position.set(pX + 15, 25, pZ + 15);
+    this.sunLight.position.set(pX + 16, 26, pZ + 16);
     this.sunLight.target.position.set(pX, 0, pZ - 5);
     this.sunLight.target.updateMatrixWorld();
 
@@ -303,27 +323,114 @@ export class Game3D {
   }
 
   // =========================================================================
-  // INPUT & TODDLER ASSISTANCE (1-TOUCH / ZERO FRUSTRAÇÃO)
+  // 3-LANE CONTROLS (SWIPE / DRAG / TAP ON SIDES / ARROW KEYS)
   // =========================================================================
-  private setupEventListeners(): void {
-    const onJumpAction = () => {
-      this.lastInteractionTime = performance.now();
-      overlayUI.hideInactivityGuide();
-      this.onJumpInput();
-    };
+  public setLane(laneIndex: number): void {
+    const clamped = Math.max(-1, Math.min(1, laneIndex));
+    if (clamped !== this.currentLane) {
+      this.currentLane = clamped;
+      this.targetX = this.LANE_POSITIONS[this.currentLane + 1];
+      audioManager.playJump(); // cheerful swoosh feedback
+    }
+  }
 
-    // 1-Touch on screen (mobile touch or mouse click)
+  public changeLane(direction: number): void {
+    this.setLane(this.currentLane + direction);
+  }
+
+  private setupEventListeners(): void {
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let pointerStartTime = 0;
+    let isPointerDown = false;
+    let hasDragged = false;
+
+    // Pointer down: record starting position
     window.addEventListener('pointerdown', (e) => {
-      // Ignore if clicking UI buttons
       const target = e.target as HTMLElement;
       if (target && target.closest('button')) return;
-      onJumpAction();
+
+      isPointerDown = true;
+      hasDragged = false;
+      pointerStartX = e.clientX;
+      pointerStartY = e.clientY;
+      pointerStartTime = performance.now();
+
+      this.lastInteractionTime = performance.now();
+      overlayUI.hideInactivityGuide();
     });
 
-    // Desktop keyboard: any key jumps
+    // Pointer move: smooth drag / swipe to change lanes
+    window.addEventListener('pointermove', (e) => {
+      if (!isPointerDown || !this.isGameActive) return;
+
+      const dx = e.clientX - pointerStartX;
+      const swipeThreshold = 35; // Responsive threshold for dragging
+
+      if (dx > swipeThreshold) {
+        hasDragged = true;
+        this.changeLane(1);
+        pointerStartX = e.clientX; // reset to allow continuous sliding
+      } else if (dx < -swipeThreshold) {
+        hasDragged = true;
+        this.changeLane(-1);
+        pointerStartX = e.clientX;
+      }
+    });
+
+    // Pointer up: if it was a quick tap, check screen side or jump!
+    window.addEventListener('pointerup', (e) => {
+      if (!isPointerDown) return;
+      isPointerDown = false;
+
+      const dx = e.clientX - pointerStartX;
+      const dy = e.clientY - pointerStartY;
+      const dt = performance.now() - pointerStartTime;
+
+      // Tap detection (minimal movement and quick duration)
+      if (!hasDragged && Math.abs(dx) < 20 && Math.abs(dy) < 20 && dt < 400) {
+        if (!this.isGameActive) return;
+
+        const screenWidth = window.innerWidth;
+        const tapRatio = e.clientX / screenWidth;
+
+        if (tapRatio < 0.35) {
+          // Tapped left third of screen
+          if (this.currentLane === -1) {
+            this.onJumpInput();
+          } else {
+            this.changeLane(-1);
+          }
+        } else if (tapRatio > 0.65) {
+          // Tapped right third of screen
+          if (this.currentLane === 1) {
+            this.onJumpInput();
+          } else {
+            this.changeLane(1);
+          }
+        } else {
+          // Tapped center
+          if (this.currentLane === 0) {
+            this.onJumpInput();
+          } else {
+            this.setLane(0);
+          }
+        }
+      }
+    });
+
+    // Keyboard support: Left/Right or A/D to change lanes, Space/Up to jump
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' || e.code.startsWith('Arrow') || e.key) {
-        onJumpAction();
+      if (!this.isGameActive) return;
+      this.lastInteractionTime = performance.now();
+      overlayUI.hideInactivityGuide();
+
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+        this.changeLane(-1);
+      } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+        this.changeLane(1);
+      } else if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+        this.onJumpInput();
       }
     });
 
@@ -357,7 +464,7 @@ export class Game3D {
   }
 
   private performJump(isDouble: boolean): void {
-    const jumpPower = isDouble ? 10.2 : 11.8;
+    const jumpPower = isDouble ? 9.5 : 10.8;
     this.shepherdVy = jumpPower;
 
     // Squash & stretch jump animation
@@ -375,8 +482,8 @@ export class Game3D {
   // =========================================================================
   public start(): void {
     this.clock.start();
-    this.currentCamPos.set(0, 3.2, 7.0);
-    this.currentCamLookAt.set(0, 1.2, -8.0);
+    this.currentCamPos.set(0, 4.6, 7.6);
+    this.currentCamLookAt.set(0, 0.9, -13.0);
 
     const animate = () => {
       this.animFrameId = requestAnimationFrame(animate);
@@ -391,6 +498,10 @@ export class Game3D {
     this.isGameActive = false;
     this.shepherdVy = 0;
     this.shepherdY = 0;
+    this.shepherdX = 0;
+    this.currentLane = 0;
+    this.targetX = 0;
+    this.roundTimeRemaining = 60.0;
     this.shepherdRoot.position.set(0, 0, this.shepherdZ);
 
     overlayUI.playCountdown(() => {
@@ -401,7 +512,6 @@ export class Game3D {
   }
 
   public restartGame(): void {
-    // Reset state & clear active entities
     this.isGameActive = false;
     this.isTurbo = false;
     this.isInvulnerable = false;
@@ -411,84 +521,102 @@ export class Game3D {
     this.shepherdZ = 0;
     this.shepherdY = 0;
     this.shepherdVy = 0;
+    this.shepherdX = 0;
+    this.currentLane = 0;
+    this.targetX = 0;
+    this.roundTimeRemaining = 60.0;
     this.shepherdRoot.position.set(0, 0, 0);
 
     this.entities.forEach(e => this.scene.remove(e.group));
     this.entities = [];
-    this.nextEntityZ = -15;
+    this.nextEntityZ = -14;
 
     overlayUI.resetHud();
     this.startGame();
   }
 
   // =========================================================================
-  // UPDATE LOOP & SPAWNER
+  // UPDATE LOOP, PHYSICS & 1-MINUTE TIMER
   // =========================================================================
   private update(delta: number, time: number): void {
     const now = performance.now();
 
-    // 1. Player Physics & Running
     if (this.isGameActive) {
-      const runSpeed = this.isTurbo ? 23.0 : 13.5;
+      // 1. Timer countdown (1 minute round)
+      this.roundTimeRemaining -= delta;
+      overlayUI.updateTimer(this.roundTimeRemaining);
+
+      if (this.roundTimeRemaining <= 0) {
+        this.roundTimeRemaining = 0;
+        this.triggerTimeUp();
+        return;
+      }
+
+      // 2. Forward running
+      const runSpeed = this.isTurbo ? 22.0 : 13.0;
       this.shepherdZ -= runSpeed * delta;
 
-      // Gravity & Vertical Movement
+      // 3. Smooth lane transition with gentle cartoon banking
+      this.targetX = this.LANE_POSITIONS[this.currentLane + 1];
+      this.shepherdX = THREE.MathUtils.lerp(this.shepherdX, this.targetX, delta * 14.0);
+      this.shepherdRoot.rotation.z = (this.shepherdX - this.targetX) * 0.12;
+
+      // 4. Vertical jump physics
       const gravity = -26.0;
       this.shepherdVy += gravity * delta;
       this.shepherdY += this.shepherdVy * delta;
 
-      // Ground Check
       if (this.shepherdY <= 0) {
         this.shepherdY = 0;
         this.shepherdVy = 0;
         this.lastOnGroundTime = now;
         this.jumpsLeft = 2;
 
-        // Jump buffering check
         if (now - this.lastJumpRequestTime <= GAME_CONFIG.JUMP_BUFFER_MS) {
           this.performJump(false);
           this.lastJumpRequestTime = 0;
         }
 
-        // Return squash/stretch to normal
         this.shepherdRoot.scale.lerp(new THREE.Vector3(1, 1, 1), delta * 12);
       }
 
       this.shepherdRoot.position.set(this.shepherdX, this.shepherdY, this.shepherdZ);
       this.shepherdAnimateRun(time, runSpeed);
 
-      // Procedural Track & Entities Spawning
+      // 5. Track chunk & entity spawning
       this.spawnChunksAndEntities();
 
-      // Check Inactivity Assistance
+      // 6. Check Inactivity Assistance
       this.checkInactivity(now);
     } else {
       this.shepherdRoot.position.set(this.shepherdX, this.shepherdY, this.shepherdZ);
     }
 
-    // 2. Entity Animations & Collision Detection
+    // Entity animations & 3-lane collision detection
     this.updateEntities(delta, time);
 
-    // 3. Clouds Drifting
+    // Drifting clouds & sun rays
     this.clouds.forEach((c, idx) => {
       c.position.x += delta * (0.3 + idx * 0.1);
       if (c.position.x > 35) c.position.x = -35;
     });
 
-    // Sun gentle ray rotation
     if (this.sunMesh) {
       this.sunMesh.rotation.z += delta * 0.15;
     }
 
-    // 4. Update Camera
+    // Camera update
     this.updateCamera(delta);
 
-    // 5. Render Scene
+    // Render 3D Scene
     this.renderer.render(this.scene, this.camera);
   }
 
+  // =========================================================================
+  // ENTITY SPAWNER ALIGNED TO THE 3 LANES
+  // =========================================================================
   private spawnChunksAndEntities(): void {
-    const forwardHorizon = this.shepherdZ - 70;
+    const forwardHorizon = this.shepherdZ - 75;
 
     // Extend track chunks forward
     while (this.nextChunkZ > forwardHorizon) {
@@ -507,125 +635,127 @@ export class Game3D {
       return true;
     });
 
-    // Spawn 3D entities ahead
+    // Spawn 3D entities ahead on the 3 lanes
     while (this.nextEntityZ > forwardHorizon) {
       const z = this.nextEntityZ;
+
+      // Pick a lane for the entity: Left (-1), Center (0), or Right (+1)
+      const laneIndex = Math.floor(Math.random() * 3) - 1;
+      const xPos = this.LANE_POSITIONS[laneIndex + 1];
+
       const pattern = Math.floor(Math.random() * 10);
 
-      if (pattern <= 3 && this.sheepCount < GAME_CONFIG.TOTAL_SHEEP_GOAL) {
-        // 3D Fluffy Sheep
+      if (pattern <= 3) {
+        // 3D Fluffy Sheep placed directly on the lane at ground level!
         const sheep = ModelBuilder.createSheep();
-        const isAir = Math.random() > 0.5;
-        const y = isAir ? 1.6 : 0.0;
-        sheep.position.set(0, y, z);
+        sheep.position.set(xPos, 0, z);
         this.scene.add(sheep);
 
         this.entities.push({
           group: sheep,
           type: 'sheep',
           z,
-          x: 0,
-          y,
-          radius: 0.85,
+          x: xPos,
+          y: 0,
+          radius: 0.95,
           onUpdate: (dt, t) => {
-            sheep.position.y = y + Math.sin(t * 3.5) * 0.15;
-            sheep.rotation.y = Math.sin(t * 2) * 0.15;
+            sheep.rotation.y = Math.sin(t * 3) * 0.2;
+            sheep.position.y = Math.abs(Math.sin(t * 4)) * 0.12; // cute little hop
           }
         });
       } else if (pattern === 4 || pattern === 5) {
-        // Arc of 3 Golden Stars
+        // String of 3 Golden Stars along the lane
         for (let s = 0; s < 3; s++) {
           const star = ModelBuilder.createStar();
           const starZ = z - s * 2.2;
-          const starY = 1.0 + Math.sin((s * Math.PI) / 2) * 1.4;
-          star.position.set(0, starY, starZ);
+          star.position.set(xPos, 0.45, starZ);
           this.scene.add(star);
 
           this.entities.push({
             group: star,
             type: 'star',
             z: starZ,
-            x: 0,
-            y: starY,
-            radius: 0.65,
+            x: xPos,
+            y: 0.45,
+            radius: 0.75,
             onUpdate: (dt) => {
-              star.rotation.y += dt * 3.0;
+              star.rotation.y += dt * 3.2;
             }
           });
         }
       } else if (pattern === 6) {
-        // 3D Rainbow Turbo Ramp
+        // 3D Rainbow Turbo Ramp on this lane
         const ramp = ModelBuilder.createTurboRamp();
-        ramp.position.set(0, 0, z);
+        ramp.position.set(xPos, 0, z);
         this.scene.add(ramp);
 
         this.entities.push({
           group: ramp,
           type: 'ramp',
           z,
-          x: 0,
+          x: xPos,
           y: 0.2,
           radius: 1.2
         });
       } else if (pattern === 7) {
-        // 3D Surprise Box (?)
+        // 3D Surprise Box on this lane
         const box = ModelBuilder.createSurpriseBox();
-        box.position.set(0, 2.1, z);
+        box.position.set(xPos, 1.15, z);
         this.scene.add(box);
 
         this.entities.push({
           group: box,
           type: 'box',
           z,
-          x: 0,
-          y: 2.1,
-          radius: 0.8,
+          x: xPos,
+          y: 1.15,
+          radius: 0.85,
           onUpdate: (dt, t) => {
-            box.position.y = 2.1 + Math.sin(t * 3) * 0.1;
-            box.rotation.y += dt * 0.8;
+            box.position.y = 1.15 + Math.sin(t * 3) * 0.1;
+            box.rotation.y += dt * 0.9;
           }
         });
       } else if (pattern === 8) {
-        // 3D Sleepy Rock
+        // 3D Sleepy Rock on this lane (other 2 lanes remain open!)
         const rock = ModelBuilder.createRock();
-        rock.position.set(0, 0, z);
+        rock.position.set(xPos, 0, z);
         this.scene.add(rock);
 
         this.entities.push({
           group: rock,
           type: 'obstacle',
           z,
-          x: 0,
+          x: xPos,
           y: 0.2,
-          radius: 0.65
+          radius: 0.75
         });
       } else if (pattern === 9) {
-        // 3D Berry Bush
+        // 3D Berry Bush on this lane
         const bush = ModelBuilder.createBush();
-        bush.position.set(0, 0, z);
+        bush.position.set(xPos, 0, z);
         this.scene.add(bush);
 
         this.entities.push({
           group: bush,
           type: 'obstacle',
           z,
-          x: 0,
+          x: xPos,
           y: 0.3,
-          radius: 0.7
+          radius: 0.75
         });
       } else {
-        // 3D Water Puddle
+        // 3D Water Puddle on this lane
         const puddle = ModelBuilder.createPuddle();
-        puddle.position.set(0, 0, z);
+        puddle.position.set(xPos, 0, z);
         this.scene.add(puddle);
 
         this.entities.push({
           group: puddle,
           type: 'obstacle',
           z,
-          x: 0,
+          x: xPos,
           y: 0.1,
-          radius: 0.65
+          radius: 0.75
         });
       }
 
@@ -633,12 +763,15 @@ export class Game3D {
     }
   }
 
+  // =========================================================================
+  // 3-LANE COLLISION DETECTION & ACTIONS
+  // =========================================================================
   private updateEntities(delta: number, time: number): void {
     const pZ = this.shepherdZ;
     const pY = this.shepherdY;
+    const pX = this.shepherdX;
 
     this.entities = this.entities.filter(ent => {
-      // Run entity idle animation
       ent.onUpdate?.(delta, time);
 
       // Clean up past entities
@@ -649,11 +782,13 @@ export class Game3D {
 
       if (ent.collected) return true;
 
-      // Check collision distance
+      // Lane-based collision: check lateral distance dx and forward distance dz
       const dz = Math.abs(ent.z - pZ);
+      const dx = Math.abs(ent.x - pX);
       const dy = Math.abs(ent.y - pY);
 
-      if (dz < ent.radius && dy < 1.3) {
+      // Must be in the same lane (dx < 0.85) and within reach
+      if (dx < 0.85 && dz < ent.radius && dy < 1.4) {
         if (ent.type === 'sheep') {
           this.collectSheep(ent);
         } else if (ent.type === 'star') {
@@ -671,9 +806,6 @@ export class Game3D {
     });
   }
 
-  // =========================================================================
-  // ACTIONS & ZERO-FRUSTRATION COLLISIONS
-  // =========================================================================
   private collectSheep(ent: ActiveEntity): void {
     ent.collected = true;
     this.sheepCount++;
@@ -682,7 +814,7 @@ export class Game3D {
     audioManager.playSheepCollect(this.sheepCount - 1);
     overlayUI.showNumberPopup(this.sheepCount);
 
-    // Sheep float up and spin
+    // Sheep float up and spin joyfully
     const sheep = ent.group;
     const startY = sheep.position.y;
     let t = 0;
@@ -696,10 +828,6 @@ export class Game3D {
         this.scene.remove(sheep);
       }
     }, 16);
-
-    if (this.sheepCount >= GAME_CONFIG.TOTAL_SHEEP_GOAL) {
-      this.triggerVictory();
-    }
   }
 
   private collectStar(ent: ActiveEntity): void {
@@ -709,7 +837,6 @@ export class Game3D {
 
     audioManager.playStarCollect();
 
-    // Star pop scale
     const star = ent.group;
     let t = 0;
     const anim = setInterval(() => {
@@ -731,7 +858,7 @@ export class Game3D {
     audioManager.speak('turbo', GAME_CONFIG.VOICE_LINES.TURBO, false);
     overlayUI.triggerTurboSparks();
 
-    this.shepherdVy = 5.5; // Gentle upward turbo boost
+    this.shepherdVy = 5.0; // Gentle upward hop
 
     if (this.turboTimer) clearTimeout(this.turboTimer);
     this.turboTimer = window.setTimeout(() => {
@@ -745,30 +872,25 @@ export class Game3D {
     audioManager.speak('surpresa', GAME_CONFIG.VOICE_LINES.SURPRISE, false);
     overlayUI.triggerSurpriseConfetti();
 
-    // Box pop & spin
     const box = ent.group;
     box.position.y += 0.4;
     setTimeout(() => {
       this.scene.remove(box);
     }, 300);
 
-    // Spawn 4 burst stars
-    for (let i = 0; i < 4; i++) {
+    // Burst 3 stars along the track
+    for (let i = 0; i < 3; i++) {
       const star = ModelBuilder.createStar();
-      const angle = (i * Math.PI) / 2;
-      star.position.set(
-        Math.cos(angle) * 1.2,
-        2.2 + Math.sin(angle) * 0.8,
-        ent.z - 1.5
-      );
+      const laneOffset = (i - 1) * 1.2;
+      star.position.set(ent.x + laneOffset, 1.2, ent.z - 1.8);
       this.scene.add(star);
 
       this.entities.push({
         group: star,
         type: 'star',
-        z: ent.z - 1.5,
-        x: Math.cos(angle) * 1.2,
-        y: 2.2,
+        z: ent.z - 1.8,
+        x: ent.x + laneOffset,
+        y: 1.2,
         radius: 0.8
       });
     }
@@ -786,7 +908,7 @@ export class Game3D {
     audioManager.playObstacleBump();
     audioManager.speak('ops', GAME_CONFIG.VOICE_LINES.OBSTACLE, false);
 
-    // Obstacle squash
+    // Obstacle squash & wiggle
     ent.group.scale.set(1.3, 0.6, 1.3);
     setTimeout(() => {
       ent.group.scale.set(1, 1, 1);
@@ -805,13 +927,16 @@ export class Game3D {
     }, 125);
   }
 
-  private triggerVictory(): void {
+  // =========================================================================
+  // 1-MINUTE ROUND TIMEOUT VICTORY
+  // =========================================================================
+  private triggerTimeUp(): void {
     this.isGameActive = false;
     audioManager.stopMusic();
 
-    this.shepherdVy = 7.0;
+    this.shepherdVy = 7.0; // Joyful victory jump
 
-    overlayUI.showVictoryScreen();
+    overlayUI.showVictoryScreen(this.sheepCount, this.starCount);
   }
 
   private checkInactivity(now: number): void {

@@ -33,11 +33,10 @@
           <div class="sheep-counter-pill">
             <span class="sheep-icon-pill">🐑</span>
             <span id="hud-sheep-count" class="hud-number">0</span>
-            <span class="hud-total">/ 10</span>
           </div>
-          <!-- 10 Little Sheep Progress Badges -->
-          <div id="sheep-progress-track" class="progress-track">
-            <!-- 10 slots populated by JS -->
+          <div class="timer-pill">
+            <span class="timer-icon-pill">⏱️</span>
+            <span id="hud-timer" class="hud-number">01:00</span>
           </div>
         </div>
         <div class="hud-right">
@@ -46,7 +45,7 @@
             <span id="hud-star-count" class="hud-number">0</span>
           </div>
           <button id="btn-camera-toggle" class="btn-icon" aria-label="Mudar Câmera" title="Mudar Câmera (3ª Pessoa / 2.5D)">
-            <span id="camera-icon">🎥</span>
+            <span id="camera-icon">🏎️</span>
           </button>
           <button id="btn-audio-toggle" class="btn-icon" aria-label="Alternar Som" title="Som">
             <span id="audio-icon">🔊</span>
@@ -63,7 +62,7 @@
             <span class="title-main">Corrida das Ovelhinhas! 🐑🌈</span>
           </h1>
           <p class="game-subtitle">
-            Toque na tela para pular, resgatar as ovelhinhas e aprender a contar!
+            Arraste para os lados para pegar as ovelhinhas, estrelas e desviar das pedras!
           </p>
           <div class="play-btn-wrapper">
             <button id="btn-play" class="btn-giant-play" aria-label="Começar a Correr">
@@ -72,7 +71,7 @@
             </button>
           </div>
           <div class="start-tip">
-            <span>✨ Sem perdedores • 1 Toque para Pular • 100% Diversão ✨</span>
+            <span>✨ 3 Pistas • 1 Minuto de Diversão • Arraste para Desviar ✨</span>
           </div>
         </div>
       </section>
@@ -94,19 +93,19 @@
       <div id="inactivity-guide" class="inactivity-guide hidden">
         <div class="finger-pointer-wrapper">
           <div class="ripple-ring"></div>
-          <div class="finger-icon">👆</div>
+          <div class="finger-icon">👈👉</div>
         </div>
-        <div class="finger-bubble">Toca aqui para pular!</div>
+        <div class="finger-bubble">Arraste para os lados!</div>
       </div>
 
       <!-- Victory Celebration Screen -->
       <section id="victory-screen" class="overlay-screen hidden">
         <div class="victory-card">
           <div class="victory-crown">👑</div>
-          <h2 class="victory-title">PARABÉNS! 🎉</h2>
+          <h2 class="victory-title">TEMPO ESGOTADO! 🎉</h2>
           <p class="victory-praise">
-            Você resgatou todas as 10 ovelhinhas!<br />
-            <strong>O Bom Pastor está muito feliz com você!</strong>
+            Você resgatou <strong id="victory-sheep-count">0</strong> ovelhinhas e pegou <strong id="victory-star-count">0</strong> estrelas!<br />
+            <strong>O Bom Pastor está muito orgulhoso de você!</strong>
           </p>
           <div class="victory-sheep-parade">
             <span class="parade-sheep s1">🐑</span>

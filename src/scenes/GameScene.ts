@@ -508,7 +508,7 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
-    this.overlayUI?.showVictoryScreen();
+    this.overlayUI?.showVictoryScreen(this.sheepCount, this.starCount);
   }
 
   // =========================================================================
