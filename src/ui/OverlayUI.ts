@@ -6,36 +6,35 @@ import { GAME_CONFIG } from '../config';
 export class OverlayUI {
   private startScreen = document.getElementById('start-screen') as HTMLElement;
   private topHud = document.getElementById('top-hud') as HTMLElement;
+  private touchControls = document.getElementById('touch-controls') as HTMLElement;
   private btnPlay = document.getElementById('btn-play') as HTMLButtonElement;
   private btnRestart = document.getElementById('btn-restart') as HTMLButtonElement;
   private btnAudioToggle = document.getElementById('btn-audio-toggle') as HTMLButtonElement;
-  private btnCameraToggle = document.getElementById('btn-camera-toggle') as HTMLButtonElement;
   private audioIcon = document.getElementById('audio-icon') as HTMLElement;
 
   private hudSheepCount = document.getElementById('hud-sheep-count') as HTMLElement;
   private hudStarCount = document.getElementById('hud-star-count') as HTMLElement;
-  private hudTimer = document.getElementById('hud-timer') as HTMLElement;
-  private timerPill = document.querySelector('.timer-pill') as HTMLElement;
 
-  private victorySheepCount = document.getElementById('victory-sheep-count') as HTMLElement;
-  private victoryStarCount = document.getElementById('victory-star-count') as HTMLElement;
+  private hudGuidePill = document.getElementById('hud-guide-pill') as HTMLElement;
+  private hudGuideIcon = document.getElementById('hud-guide-icon') as HTMLElement;
+  private hudGuideText = document.getElementById('hud-guide-text') as HTMLElement;
 
-  private countdownOverlay = document.getElementById('countdown-overlay') as HTMLElement;
-  private countdownText = document.getElementById('countdown-text') as HTMLElement;
+  private toastNotification = document.getElementById('toast-notification') as HTMLElement;
+  private toastText = document.getElementById('toast-text') as HTMLElement;
+  private toastTimeout: number | null = null;
 
   private numberPopupContainer = document.getElementById('number-popup-container') as HTMLElement;
   private numberPopupDigit = document.getElementById('number-popup-digit') as HTMLElement;
   private numberPopupLabel = document.getElementById('number-popup-label') as HTMLElement;
-
-  private inactivityGuide = document.getElementById('inactivity-guide') as HTMLElement;
-  private victoryScreen = document.getElementById('victory-screen') as HTMLElement;
-
   private numberPopupTimeout: number | null = null;
-  private isFingerGuideVisible: boolean = false;
+
+  private victoryScreen = document.getElementById('victory-screen') as HTMLElement;
+  private victorySheepCount = document.getElementById('victory-sheep-count') as HTMLElement;
+  private victoryStarCount = document.getElementById('victory-star-count') as HTMLElement;
 
   constructor() {}
 
-  public init(onStartGame: () => void, onRestartGame: () => void, onToggleCamera?: () => void): void {
+  public init(onStartGame: () => void, onRestartGame: () => void): void {
     // Animate Giant Play button breathing pulse with Motion
     if (this.btnPlay) {
       animate(
@@ -61,13 +60,6 @@ export class OverlayUI {
       });
     }
 
-    if (this.btnCameraToggle && onToggleCamera) {
-      this.btnCameraToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        onToggleCamera();
-      });
-    }
-
     if (this.btnAudioToggle) {
       this.btnAudioToggle.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -77,18 +69,11 @@ export class OverlayUI {
     }
   }
 
-  public updateCameraIcon(mode: 'chase' | 'isometric'): void {
-    const icon = document.getElementById('camera-icon');
-    if (icon) {
-      icon.textContent = mode === 'chase' ? '🏎️' : '📐';
-    }
-  }
-
   public showStartScreen(): void {
-    this.startScreen.classList.remove('hidden');
-    this.topHud.classList.add('hidden');
-    this.victoryScreen.classList.add('hidden');
-    this.inactivityGuide.classList.add('hidden');
+    this.startScreen?.classList.remove('hidden');
+    this.topHud?.classList.add('hidden');
+    this.touchControls?.classList.add('hidden');
+    this.victoryScreen?.classList.add('hidden');
   }
 
   public hideStartScreen(): void {
@@ -97,13 +82,14 @@ export class OverlayUI {
       { opacity: [1, 0], scale: [1, 0.95] },
       { duration: 0.3 }
     ).then(() => {
-      this.startScreen.classList.add('hidden');
+      this.startScreen?.classList.add('hidden');
       this.showHud();
+      this.showTouchControls();
     });
   }
 
   public showHud(): void {
-    this.topHud.classList.remove('hidden');
+    this.topHud?.classList.remove('hidden');
     animate(
       this.topHud,
       { y: [-20, 0], opacity: [0, 1] },
@@ -112,29 +98,28 @@ export class OverlayUI {
   }
 
   public hideHud(): void {
-    this.topHud.classList.add('hidden');
+    this.topHud?.classList.add('hidden');
   }
 
-  public updateTimer(seconds: number): void {
-    if (!this.hudTimer) return;
-    const s = Math.max(0, Math.ceil(seconds));
-    const mins = Math.floor(s / 60);
-    const secs = s % 60;
-    this.hudTimer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-
-    if (s <= 10 && s > 0) {
-      this.timerPill?.classList.add('urgent');
-    } else {
-      this.timerPill?.classList.remove('urgent');
-    }
+  public showTouchControls(): void {
+    this.touchControls?.classList.remove('hidden');
+    animate(
+      this.touchControls,
+      { opacity: [0, 1] },
+      { duration: 0.3 }
+    );
   }
 
-  public updateSheepCount(count: number): void {
+  public hideTouchControls(): void {
+    this.touchControls?.classList.add('hidden');
+  }
+
+  public updateSheepCount(count: number, total: number = 10): void {
     if (this.hudSheepCount) {
-      this.hudSheepCount.textContent = count.toString();
+      this.hudSheepCount.textContent = `${count} / ${total}`;
       animate(
         this.hudSheepCount,
-        { scale: [1, 1.4, 1] },
+        { scale: [1, 1.35, 1] },
         { duration: 0.35, type: 'spring', bounce: 0.5 }
       );
     }
@@ -152,10 +137,8 @@ export class OverlayUI {
   }
 
   public resetHud(): void {
-    if (this.hudSheepCount) this.hudSheepCount.textContent = '0';
+    if (this.hudSheepCount) this.hudSheepCount.textContent = '0 / 10';
     if (this.hudStarCount) this.hudStarCount.textContent = '0';
-    if (this.hudTimer) this.hudTimer.textContent = '01:00';
-    this.timerPill?.classList.remove('urgent');
   }
 
   public updateAudioIcon(muted: boolean): void {
@@ -165,49 +148,58 @@ export class OverlayUI {
   }
 
   // =========================================================================
-  // 3... 2... 1... JÁ! COUNTDOWN WITH MOTION & AUDIO
+  // BÚSSOLA E GUIA DIRECIONAL
   // =========================================================================
-  public async playCountdown(onComplete: () => void): Promise<void> {
-    this.countdownOverlay.classList.remove('hidden');
+  public updateGuidePill(text: string, type: 'farm' | 'sheep' | 'done'): void {
+    if (!this.hudGuideText || !this.hudGuidePill) return;
 
-    const steps = [
-      { text: '3', color: '#fbbf24', voiceKey: 'largada-3', voiceText: GAME_CONFIG.VOICE_LINES.COUNTDOWN_3, isGo: false },
-      { text: '2', color: '#f59e0b', voiceKey: 'largada-2', voiceText: GAME_CONFIG.VOICE_LINES.COUNTDOWN_2, isGo: false },
-      { text: '1', color: '#ef4444', voiceKey: 'largada-1', voiceText: GAME_CONFIG.VOICE_LINES.COUNTDOWN_1, isGo: false },
-      { text: 'JÁ! 🚀', color: '#22c55e', voiceKey: 'largada-ja', voiceText: GAME_CONFIG.VOICE_LINES.COUNTDOWN_GO, isGo: true }
-    ];
-
-    for (const step of steps) {
-      this.countdownText.textContent = step.text;
-      this.countdownText.style.color = step.color;
-
-      audioManager.playCountdownBeep(step.isGo);
-      audioManager.speak(step.voiceKey, step.voiceText, true);
-
-      // Spring pop animation with Motion
-      await animate(
-        this.countdownText,
-        { scale: [0.2, 1.35, 1], opacity: [0, 1] },
-        { duration: 0.45, type: 'spring', bounce: 0.6 }
-      );
-
-      // Small pause before next count
-      await new Promise(r => setTimeout(r, step.isGo ? 550 : 380));
+    this.hudGuideText.textContent = text;
+    if (this.hudGuideIcon) {
+      this.hudGuideIcon.textContent = type === 'farm' ? '🏡' : type === 'sheep' ? '🐑' : '🎉';
     }
 
-    animate(
-      this.countdownOverlay,
-      { opacity: [1, 0] },
-      { duration: 0.25 }
-    ).then(() => {
-      this.countdownOverlay.classList.add('hidden');
-      this.countdownOverlay.style.opacity = '1';
-      onComplete();
-    });
+    if (type === 'farm') {
+      this.hudGuidePill.className = 'guide-pill to-farm';
+    } else if (type === 'sheep') {
+      this.hudGuidePill.className = 'guide-pill to-sheep';
+    } else {
+      this.hudGuidePill.className = 'guide-pill is-done';
+    }
   }
 
   // =========================================================================
-  // GIANT SHEEP NUMBER POP-UP (Any number: 1, 2, ... 25+)
+  // TOAST QUANDO ACHA UMA OVELHINHA
+  // =========================================================================
+  public showSheepFoundToast(sheepName: string): void {
+    if (this.toastTimeout) {
+      clearTimeout(this.toastTimeout);
+      this.toastTimeout = null;
+    }
+
+    if (this.toastText) {
+      this.toastText.textContent = `Você achou a ovelhinha ${sheepName}! Leve-a para a fazenda! 🏡`;
+    }
+
+    this.toastNotification?.classList.remove('hidden');
+    animate(
+      this.toastNotification,
+      { y: [-30, 0], opacity: [0, 1], scale: [0.8, 1] },
+      { duration: 0.4, type: 'spring', bounce: 0.5 }
+    );
+
+    this.toastTimeout = window.setTimeout(() => {
+      animate(
+        this.toastNotification,
+        { opacity: [1, 0], y: [0, -20] },
+        { duration: 0.3 }
+      ).then(() => {
+        this.toastNotification?.classList.add('hidden');
+      });
+    }, 2800);
+  }
+
+  // =========================================================================
+  // GIANT SHEEP NUMBER POP-UP AO ENTREGAR NA FAZENDA
   // =========================================================================
   public showNumberPopup(count: number): void {
     if (this.numberPopupTimeout) {
@@ -215,78 +207,49 @@ export class OverlayUI {
       this.numberPopupTimeout = null;
     }
 
-    this.numberPopupDigit.textContent = count.toString();
-    this.numberPopupLabel.textContent = count === 1 ? '1ª Ovelhinha! 🐑' : `${count}ª Ovelhinha! 🐑`;
+    if (this.numberPopupDigit) this.numberPopupDigit.textContent = count.toString();
+    if (this.numberPopupLabel) {
+      this.numberPopupLabel.textContent = count === 1 ? '1ª Ovelhinha Salva! 🐑' : `${count}ª Ovelhinha Salva! 🐑`;
+    }
 
-    // Dynamic rainbow color per number
     const colors = GAME_CONFIG.COLORS.RAINBOW;
     const color = colors[(count - 1) % colors.length];
-    this.numberPopupDigit.style.color = color;
+    if (this.numberPopupDigit) this.numberPopupDigit.style.color = color;
 
-    this.numberPopupContainer.classList.remove('hidden');
+    this.numberPopupContainer?.classList.remove('hidden');
 
     animate(
       this.numberPopupContainer,
-      { scale: [0.2, 1.28, 1], y: [-30, 0], opacity: [0, 1] },
+      { scale: [0.2, 1.25, 1], y: [-30, 0], opacity: [0, 1] },
       { duration: 0.5, type: 'spring', bounce: 0.6 }
     );
 
-    // Speak enthusiastic number
+    // Fala neural carinhosa com o número
     const voiceText = count === 1 ? 'Uma ovelhinha!' : `${count} ovelhinhas!`;
     audioManager.speak(`num-${count}`, voiceText, true);
 
-    // Auto dismiss after 1.2s
     this.numberPopupTimeout = window.setTimeout(() => {
       animate(
         this.numberPopupContainer,
         { scale: [1, 0.8], opacity: [1, 0] },
         { duration: 0.3 }
       ).then(() => {
-        this.numberPopupContainer.classList.add('hidden');
+        this.numberPopupContainer?.classList.add('hidden');
       });
-    }, 1200);
+    }, 1400);
   }
 
   // =========================================================================
-  // INACTIVITY FINGER ASSISTANCE
+  // TELA DE VITÓRIA (TODAS AS 10 OVELHAS SALVAS NO APRISCO)
   // =========================================================================
-  public showInactivityGuide(): void {
-    if (this.isFingerGuideVisible) return;
-    this.isFingerGuideVisible = true;
-    this.inactivityGuide.classList.remove('hidden');
-
-    animate(
-      this.inactivityGuide,
-      { scale: [0.4, 1.15, 1], opacity: [0, 1] },
-      { duration: 0.4, type: 'spring', bounce: 0.5 }
-    );
-
-    audioManager.speak('toca', 'Arraste para os lados para pegar as ovelhinhas!');
-  }
-
-  public hideInactivityGuide(): void {
-    if (!this.isFingerGuideVisible) return;
-    this.isFingerGuideVisible = false;
-
-    animate(
-      this.inactivityGuide,
-      { opacity: [1, 0], scale: [1, 0.6] },
-      { duration: 0.2 }
-    ).then(() => {
-      this.inactivityGuide.classList.add('hidden');
-    });
-  }
-
-  // =========================================================================
-  // VICTORY CELEBRATION (End of 1-minute round)
-  // =========================================================================
-  public showVictoryScreen(totalSheep: number = 0, totalStars: number = 0): void {
+  public showVictoryScreen(totalSheep: number = 10, totalStars: number = 0): void {
     if (this.victorySheepCount) this.victorySheepCount.textContent = totalSheep.toString();
     if (this.victoryStarCount) this.victoryStarCount.textContent = totalStars.toString();
 
-    this.victoryScreen.classList.remove('hidden');
+    this.touchControls?.classList.add('hidden');
+    this.victoryScreen?.classList.remove('hidden');
 
-    const card = this.victoryScreen.querySelector('.victory-card') as HTMLElement;
+    const card = this.victoryScreen?.querySelector('.victory-card') as HTMLElement;
     if (card) {
       animate(
         card,
@@ -295,35 +258,27 @@ export class OverlayUI {
       );
     }
 
-    // Play triumphant audio & voice
-    audioManager.playVictory();
-    const praise = totalSheep === 1
-      ? `Parabéns! Você resgatou uma ovelhinha!`
-      : `Parabéns! Você resgatou ${totalSheep} ovelhinhas e pegou ${totalStars} estrelas!`;
-    audioManager.speak('parabens', praise, true);
-
-    // Celebration fireworks & confetti rain!
     this.triggerVictoryFireworks();
   }
 
   public hideVictoryScreen(): void {
-    this.victoryScreen.classList.add('hidden');
+    this.victoryScreen?.classList.add('hidden');
   }
 
   public triggerVictoryFireworks(): void {
-    const end = Date.now() + 3000;
+    const end = Date.now() + 3500;
     const colors = ['#f43f5e', '#fbbf24', '#4ade80', '#38bdf8', '#c084fc'];
 
     (function frame() {
       confetti({
-        particleCount: 4,
+        particleCount: 5,
         angle: 60,
         spread: 55,
         origin: { x: 0, y: 0.7 },
         colors: colors
       });
       confetti({
-        particleCount: 4,
+        particleCount: 5,
         angle: 120,
         spread: 55,
         origin: { x: 1, y: 0.7 },
@@ -338,20 +293,10 @@ export class OverlayUI {
 
   public triggerSurpriseConfetti(): void {
     confetti({
-      particleCount: 35,
+      particleCount: 30,
       spread: 70,
       origin: { y: 0.6 },
       colors: ['#facc15', '#fbbf24', '#f59e0b', '#38bdf8', '#4ade80']
-    });
-  }
-
-  public triggerTurboSparks(): void {
-    confetti({
-      particleCount: 20,
-      spread: 90,
-      startVelocity: 25,
-      origin: { y: 0.7 },
-      colors: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6']
     });
   }
 }

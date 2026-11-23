@@ -44,7 +44,7 @@ html, body {
   width: 100%;
   height: 100%;
   z-index: 10;
-  pointer-events: none; /* Let gameplay clicks pass through except on interactive UI */
+  pointer-events: none;
 }
 
 /* Common helper classes */
@@ -72,7 +72,15 @@ html, body {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+}
+
+.hud-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  max-width: 440px;
+  margin: 0 8px;
 }
 
 .hud-right {
@@ -81,97 +89,219 @@ html, body {
   gap: 10px;
 }
 
-.sheep-counter-pill, .star-pill, .timer-pill {
+.sheep-counter-pill, .star-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   padding: 6px 14px;
   border-radius: 999px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), inset 0 2px 0 rgba(255, 255, 255, 0.8);
   border: 3px solid #facc15;
 }
 
-.timer-pill {
+.star-pill {
   border-color: #38bdf8;
 }
 
-.timer-pill.urgent {
-  border-color: #ef4444;
-  animation: pulseUrgent 0.6s infinite alternate;
-}
-
-@keyframes pulseUrgent {
-  0% { transform: scale(1); background: #ffffff; }
-  100% { transform: scale(1.08); background: #fee2e2; }
-}
-
-.sheep-icon-pill, .star-icon-pill, .timer-icon-pill {
-  font-size: 1.4rem;
+.sheep-icon-pill, .star-icon-pill {
+  font-size: 20px;
 }
 
 .hud-number {
-  font-size: 1.4rem;
+  font-size: 18px;
   font-weight: 800;
   color: #1e293b;
+  min-width: 20px;
+  text-align: center;
 }
 
-.hud-total {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #64748b;
-}
-
-.progress-track {
-  display: flex;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 4px 8px;
-  border-radius: 999px;
-  border: 2px solid #e2e8f0;
-}
-
-.sheep-slot {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #e2e8f0;
-  display: flex;
+/* Bússola e Guia Direcional */
+.guide-pill {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s;
+  gap: 8px;
+  padding: 7px 18px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), inset 0 2px 0 rgba(255, 255, 255, 0.8);
+  transition: background-color 0.3s, border-color 0.3s;
+  text-align: center;
+  white-space: nowrap;
 }
 
-.sheep-slot.filled {
-  background: #4ade80;
-  box-shadow: 0 0 8px #22c55e;
-  transform: scale(1.15);
+.guide-pill.to-sheep {
+  background: rgba(254, 240, 138, 0.96);
+  border: 3px solid #facc15;
+  color: #854d0e;
+}
+
+.guide-pill.to-farm {
+  background: rgba(220, 252, 231, 0.96);
+  border: 3px solid #22c55e;
+  color: #15803d;
+  animation: pulse-border 1.5s infinite;
+}
+
+.guide-pill.is-done {
+  background: rgba(243, 232, 255, 0.96);
+  border: 3px solid #a855f7;
+  color: #6b21a8;
+}
+
+@keyframes pulse-border {
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3); }
+  50% { transform: scale(1.04); box-shadow: 0 6px 20px rgba(34, 197, 94, 0.55); }
 }
 
 .btn-icon {
-  background: rgba(255, 255, 255, 0.9);
-  border: 3px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.94);
+  border: 3px solid #facc15;
   border-radius: 50%;
   width: 44px;
   height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 20px;
   cursor: pointer;
-  pointer-events: auto;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.15s ease, background-color 0.2s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+.btn-icon:hover {
+  transform: scale(1.08);
+  background: #ffffff;
 }
 
 .btn-icon:active {
-  transform: scale(0.9);
-  background: #f1f5f9;
+  transform: scale(0.92);
 }
 
 /* =========================================================
-   OVERLAY SCREENS (Start, Victory)
+   TOAST NOTIFICATION (QUANDO ACHA A OVELHINHA)
+   ========================================================= */
+.toast-notification {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.96);
+  border: 3px solid #4ade80;
+  border-radius: 999px;
+  padding: 8px 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #166534;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  z-index: 25;
+  pointer-events: none;
+  max-width: 90%;
+  text-align: center;
+}
+
+/* =========================================================
+   CONTROLES TOUCH (MOBILE STICK & PULO)
+   ========================================================= */
+.touch-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 200px;
+  pointer-events: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 24px env(safe-area-inset-bottom, 18px) 24px;
+  z-index: 25;
+}
+
+.joystick-zone {
+  pointer-events: auto;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+}
+
+.joystick-base {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.2) 100%);
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.6);
+  position: relative;
+  touch-action: none;
+}
+
+.joystick-knob {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #60a5fa 0%, #2563eb 100%);
+  border: 3px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.8);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  will-change: transform;
+}
+
+.joystick-hint {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.touch-action-zone {
+  pointer-events: auto;
+  padding-bottom: 14px;
+}
+
+.btn-touch-jump {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #4ade80 0%, #16a34a 100%);
+  border: 4px solid #ffffff;
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.45);
+  color: #ffffff;
+  font-family: 'Fredoka', cursive, sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-touch-jump.active, .btn-touch-jump:active {
+  transform: scale(0.92);
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.3);
+}
+
+.btn-touch-jump .jump-icon {
+  font-size: 26px;
+  line-height: 1;
+}
+
+/* =========================================================
+   OVERLAY SCREENS (START & VICTORY)
    ========================================================= */
 .overlay-screen {
   position: absolute;
@@ -182,145 +312,118 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(14, 116, 144, 0.45);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  padding: 16px;
   pointer-events: auto;
-  z-index: 50;
+  z-index: 30;
+  padding: 16px;
 }
 
 .start-card, .victory-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+  background: rgba(255, 255, 255, 0.98);
   border-radius: 36px;
-  padding: 32px 28px;
+  padding: 36px 32px 32px;
   text-align: center;
-  max-width: 460px;
-  width: 92%;
-  border: 6px solid #4ade80;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25), 0 0 0 10px rgba(255, 255, 255, 0.6);
-  position: relative;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25), 0 0 0 8px rgba(250, 204, 21, 0.85);
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 }
 
 .sun-header-badge, .victory-crown {
-  font-size: 3.5rem;
-  margin-bottom: -10px;
-  animation: floatBounce 2.4s ease-in-out infinite alternate;
+  font-size: 56px;
+  margin-top: -64px;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
+  animation: float-badge 3s ease-in-out infinite;
+}
+
+@keyframes float-badge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
 
 .game-title {
-  margin: 8px 0;
-  line-height: 1.15;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
 }
 
 .title-sub {
-  display: block;
-  font-size: 1.1rem;
-  font-weight: 800;
+  font-size: 18px;
+  font-weight: 700;
   color: #0284c7;
   letter-spacing: 2px;
   text-transform: uppercase;
 }
 
 .title-main {
-  display: block;
-  font-size: 1.85rem;
+  font-size: 32px;
   font-weight: 800;
-  color: #15803d;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+  line-height: 1.15;
 }
 
-.game-subtitle {
-  font-size: 1.1rem;
-  color: #475569;
+.game-subtitle, .victory-praise {
+  font-size: 17px;
   font-weight: 600;
+  color: #475569;
+  line-height: 1.45;
   margin-bottom: 24px;
-  line-height: 1.35;
 }
 
 .play-btn-wrapper {
-  margin: 10px 0;
   width: 100%;
   display: flex;
   justify-content: center;
+  margin-bottom: 16px;
 }
 
 .btn-giant-play {
-  background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   color: #ffffff;
-  border: none;
-  outline: none;
+  border: 4px solid #ffffff;
   border-radius: 999px;
-  padding: 18px 48px;
-  font-size: 2rem;
+  padding: 16px 38px;
+  font-family: inherit;
+  font-size: 24px;
   font-weight: 800;
-  letter-spacing: 1px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 12px;
   cursor: pointer;
-  box-shadow: 0 10px 0 #15803d, 0 16px 25px rgba(22, 163, 74, 0.45);
-  transform: translateY(0);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
-  pointer-events: auto;
-  font-family: inherit;
+  box-shadow: 0 10px 25px rgba(22, 163, 74, 0.45), inset 0 2px 0 rgba(255, 255, 255, 0.6);
+  transition: transform 0.15s, box-shadow 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-giant-play:hover {
+  transform: scale(1.05);
+  box-shadow: 0 14px 30px rgba(22, 163, 74, 0.55);
 }
 
 .btn-giant-play:active {
-  transform: translateY(6px);
-  box-shadow: 0 4px 0 #15803d, 0 8px 12px rgba(22, 163, 74, 0.45);
-}
-
-.play-icon {
-  font-size: 2.2rem;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  transform: scale(0.96);
 }
 
 .start-tip {
-  margin-top: 18px;
-  font-size: 0.85rem;
+  font-size: 14px;
   font-weight: 700;
-  color: #0369a1;
-  background: #e0f2fe;
-  padding: 6px 14px;
-  border-radius: 999px;
+  color: #64748b;
 }
 
 /* =========================================================
-   3, 2, 1, JÁ! COUNTDOWN OVERLAY
-   ========================================================= */
-.countdown-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 60;
-}
-
-.countdown-bounce {
-  font-size: clamp(5rem, 20vw, 10rem);
-  font-weight: 800;
-  color: #fbbf24;
-  text-shadow: 4px 6px 0 #d97706, 0 10px 30px rgba(0, 0, 0, 0.35);
-  -webkit-text-stroke: 4px #78350f;
-  transform: scale(1);
-}
-
-/* =========================================================
-   GIANT SHEEP NUMBER POP-UP
+   GIANT SHEEP NUMBER POP-UP AO ENTREGAR NA FAZENDA
    ========================================================= */
 .number-popup-container {
   position: absolute;
-  top: 15%;
+  top: 14%;
   left: 50%;
   transform: translateX(-50%);
   pointer-events: none;
@@ -328,275 +431,103 @@ html, body {
 }
 
 .number-popup-card {
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 36px;
+  padding: 20px 38px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #ffffff 0%, #fef3c7 100%);
-  border: 5px solid #f59e0b;
-  border-radius: 32px;
-  padding: 12px 36px;
-  box-shadow: 0 12px 30px rgba(245, 158, 11, 0.4), inset 0 2px 0 #ffffff;
+  gap: 6px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25), 0 0 0 6px rgba(250, 204, 21, 0.85);
 }
 
 .number-popup-digit {
-  font-size: clamp(3.5rem, 14vw, 6rem);
+  font-size: 78px;
   font-weight: 800;
-  color: #d97706;
   line-height: 1;
-  text-shadow: 2px 3px 0 #b45309;
 }
 
 .number-popup-label {
-  font-size: clamp(1.1rem, 4.5vw, 1.8rem);
+  font-size: 22px;
   font-weight: 800;
-  color: #15803d;
-  margin-top: 2px;
-}
-
-/* =========================================================
-   INACTIVITY FINGER GUIDE
-   ========================================================= */
-.inactivity-guide {
-  position: absolute;
-  bottom: 22%;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  pointer-events: none;
-  z-index: 35;
-  animation: bounceHint 1.2s infinite alternate ease-in-out;
-}
-
-.finger-pointer-wrapper {
-  position: relative;
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.finger-icon {
-  font-size: 3.2rem;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-}
-
-.ripple-ring {
-  position: absolute;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  border: 4px solid #f59e0b;
-  animation: ripplePulse 1.4s infinite cubic-bezier(0, 0.2, 0.8, 1);
-}
-
-.finger-bubble {
-  background: #ffffff;
   color: #1e293b;
-  font-size: 1.1rem;
-  font-weight: 700;
-  padding: 8px 18px;
-  border-radius: 999px;
-  margin-top: 8px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-  border: 3px solid #facc15;
-  white-space: nowrap;
 }
 
 /* =========================================================
-   VICTORY CARD DETAILS
+   VICTORY PARADE & STARS
    ========================================================= */
-.victory-card {
-  border-color: #f59e0b;
-}
-
 .victory-title {
-  font-size: 2.2rem;
+  font-size: 34px;
   font-weight: 800;
-  color: #b45309;
-  margin-bottom: 8px;
-}
-
-.victory-praise {
-  font-size: 1.15rem;
-  color: #334155;
-  margin-bottom: 16px;
-  line-height: 1.4;
+  color: #16a34a;
+  margin-bottom: 12px;
 }
 
 .victory-sheep-parade {
+  font-size: 40px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  font-size: 2.8rem;
-  margin: 12px 0;
-}
-
-.parade-sheep.s1 {
-  animation: floatBounce 1s infinite alternate ease-in-out;
-}
-
-.parade-sheep.s2 {
-  animation: floatBounce 1s infinite alternate-reverse ease-in-out;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .victory-stars-row {
   display: flex;
-  gap: 12px;
   align-items: center;
-  margin-bottom: 20px;
-}
-
-.star-badge {
-  font-size: 2.2rem;
-  animation: starPop 0.8s ease forwards;
+  gap: 12px;
+  font-size: 32px;
+  margin-bottom: 24px;
 }
 
 .star-badge.big {
-  font-size: 3rem;
+  font-size: 48px;
+  animation: pulse-star 1.4s ease-in-out infinite;
 }
 
-.victory-btn {
-  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
-  box-shadow: 0 10px 0 #b45309, 0 16px 25px rgba(217, 119, 6, 0.4);
+@keyframes pulse-star {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
 }
 
-.victory-btn:active {
-  box-shadow: 0 4px 0 #b45309, 0 8px 12px rgba(217, 119, 6, 0.4);
-}
-
-/* Keyframe Animations */
-@keyframes floatBounce {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-8px); }
-}
-
-@keyframes bounceHint {
-  0% { transform: translate(-50%, 0); }
-  100% { transform: translate(-50%, -12px); }
-}
-
-@keyframes ripplePulse {
-  0% {
-    transform: scale(0.6);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1.6);
-    opacity: 0;
-  }
-}
-
-@keyframes starPop {
-  0% { transform: scale(0) rotate(-30deg); opacity: 0; }
-  70% { transform: scale(1.3) rotate(15deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
-}
-
-/* Mobile Portrait specific adjustments */
-@media (max-width: 640px) and (orientation: portrait), (max-width: 480px) {
+/* =========================================================
+   RESPONSIVIDADE MOBILE
+   ========================================================= */
+@media (max-width: 600px) {
   .hud {
-    padding: 8px 12px;
-    flex-wrap: wrap;
-    row-gap: 8px;
+    padding: 6px 10px;
   }
-  .hud-left {
-    gap: 8px;
-    flex-wrap: nowrap;
-    width: auto;
-  }
-  .progress-track {
-    order: 3;
-    width: 100%;
-    justify-content: center;
-    gap: 3px;
-    padding: 4px 8px;
-    background: rgba(255, 255, 255, 0.9);
-  }
-  .sheep-slot {
-    width: 20px;
-    height: 20px;
-    font-size: 10px;
-  }
-  .sheep-counter-pill, .star-pill, .timer-pill {
-    padding: 4px 10px;
-  }
-  .sheep-icon-pill, .star-icon-pill, .timer-icon-pill {
-    font-size: 1.15rem;
-  }
-  .hud-number {
-    font-size: 1.2rem;
-  }
-  .btn-icon {
-    width: 38px;
-    height: 38px;
-    font-size: 1.1rem;
-  }
-  .start-card, .victory-card {
-    padding: 24px 20px;
-    border-radius: 28px;
-    max-width: 90%;
-  }
-  .sun-header-badge, .victory-crown {
-    font-size: 3rem;
-  }
-  .title-main {
-    font-size: 1.55rem;
-  }
-  .game-subtitle {
-    font-size: 0.95rem;
-    margin-bottom: 16px;
-  }
-  .btn-giant-play {
-    padding: 14px 34px;
-    font-size: 1.6rem;
-    gap: 12px;
-  }
-  .play-icon {
-    font-size: 1.8rem;
-  }
-  .number-popup-container {
-    top: 16%;
-  }
-}
 
-@media (max-height: 500px) {
-  /* Mobile Landscape */
+  .hud-center {
+    margin: 0 4px;
+  }
+
+  .guide-pill {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+
   .start-card, .victory-card {
-    padding: 16px 24px;
-    max-width: 520px;
-    border-radius: 24px;
+    padding: 28px 20px 24px;
+    border-radius: 28px;
   }
-  .sun-header-badge, .victory-crown {
-    font-size: 2.2rem;
-    margin-bottom: -4px;
-  }
+
   .title-main {
-    font-size: 1.4rem;
+    font-size: 24px;
   }
+
   .game-subtitle {
-    font-size: 0.95rem;
-    margin-bottom: 12px;
+    font-size: 15px;
   }
+
   .btn-giant-play {
-    padding: 10px 32px;
-    font-size: 1.4rem;
+    font-size: 20px;
+    padding: 14px 30px;
   }
-  .victory-sheep-parade {
-    font-size: 2rem;
-    margin: 4px 0;
+
+  .number-popup-digit {
+    font-size: 64px;
   }
-  .victory-stars-row {
-    margin-bottom: 10px;
-  }
-  .number-popup-container {
-    top: 10%;
-  }
-  .inactivity-guide {
-    bottom: 24%;
+
+  .number-popup-label {
+    font-size: 18px;
   }
 }

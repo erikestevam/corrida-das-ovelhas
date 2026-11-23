@@ -552,11 +552,412 @@ export class ModelBuilder {
         opacity: 0.85
       });
       const tube = new THREE.Mesh(tubeGeo, tubeMat);
-      tube.rotation.x = Math.PI * 0.5;
+      // Stands upright in the sky (XY plane, arching above the horizon)
       rainbowGroup.add(tube);
     });
 
     return rainbowGroup;
+  }
+
+  /**
+   * Creates the 3D Farm Barn (Celeiro da Fazenda)
+   */
+  public static createBarn(): THREE.Group {
+    const barn = new THREE.Group();
+
+    const barnRedMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.6 });
+    const whiteTrimMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.5 });
+    const roofMat = new THREE.MeshStandardMaterial({ color: 0x7f1d1d, roughness: 0.4 });
+    const woodDoorMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.7 });
+
+    // 1. Main Barn Body
+    const bodyGeo = new THREE.BoxGeometry(7, 4.5, 9);
+    const bodyMesh = new THREE.Mesh(bodyGeo, barnRedMat);
+    bodyMesh.position.y = 2.25;
+    bodyMesh.castShadow = true;
+    bodyMesh.receiveShadow = true;
+    barn.add(bodyMesh);
+
+    // 2. White vertical corner posts
+    const cornerOffsets = [
+      [-3.52, 2.25, -4.52], [3.52, 2.25, -4.52],
+      [-3.52, 2.25, 4.52], [3.52, 2.25, 4.52]
+    ];
+    const postGeo = new THREE.BoxGeometry(0.3, 4.55, 0.3);
+    cornerOffsets.forEach(([cx, cy, cz]) => {
+      const post = new THREE.Mesh(postGeo, whiteTrimMat);
+      post.position.set(cx, cy, cz);
+      post.castShadow = true;
+      barn.add(post);
+    });
+
+    // 3. Barn Roof (Gabled roof)
+    const roofShape = new THREE.Shape();
+    roofShape.moveTo(-3.8, 0);
+    roofShape.lineTo(0, 2.4);
+    roofShape.lineTo(3.8, 0);
+    roofShape.closePath();
+
+    const extrudeSettings = { depth: 9.6, bevelEnabled: false };
+    const roofGeo = new THREE.ExtrudeGeometry(roofShape, extrudeSettings);
+    roofGeo.center();
+    const roofMesh = new THREE.Mesh(roofGeo, roofMat);
+    roofMesh.position.set(0, 5.65, 0);
+    roofMesh.rotation.y = Math.PI / 2;
+    roofMesh.castShadow = true;
+    roofMesh.receiveShadow = true;
+    barn.add(roofMesh);
+
+    // 4. Large Barn Double Door
+    const doorFrameGeo = new THREE.BoxGeometry(2.6, 3.2, 0.15);
+    const doorFrame = new THREE.Mesh(doorFrameGeo, whiteTrimMat);
+    doorFrame.position.set(0, 1.6, 4.52);
+    barn.add(doorFrame);
+
+    const doorGeo = new THREE.BoxGeometry(2.3, 3.0, 0.12);
+    const door = new THREE.Mesh(doorGeo, woodDoorMat);
+    door.position.set(0, 1.5, 4.55);
+    barn.add(door);
+
+    // White X pattern on door
+    const xBeamGeo = new THREE.BoxGeometry(0.12, 3.2, 0.05);
+    const beam1 = new THREE.Mesh(xBeamGeo, whiteTrimMat);
+    beam1.position.set(-0.55, 1.5, 4.62);
+    beam1.rotation.z = Math.PI * 0.18;
+    const beam2 = new THREE.Mesh(xBeamGeo, whiteTrimMat);
+    beam2.position.set(0.55, 1.5, 4.62);
+    beam2.rotation.z = -Math.PI * 0.18;
+    barn.add(beam1, beam2);
+
+    // 5. Hayloft round window
+    const windowGeo = new THREE.CylinderGeometry(0.65, 0.65, 0.1, 16);
+    const windowMat = new THREE.MeshStandardMaterial({
+      color: 0xfef08a,
+      emissive: 0xfacc15,
+      emissiveIntensity: 0.35
+    });
+    const loftWindow = new THREE.Mesh(windowGeo, windowMat);
+    loftWindow.rotation.x = Math.PI / 2;
+    loftWindow.position.set(0, 4.8, 4.52);
+    barn.add(loftWindow);
+
+    // 6. Weather vane on top
+    const vanePoleGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.8, 8);
+    const vaneMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8, roughness: 0.2 });
+    const vanePole = new THREE.Mesh(vanePoleGeo, vaneMat);
+    vanePole.position.set(0, 7.1, 0);
+    barn.add(vanePole);
+
+    // Weather rooster
+    const roosterGeo = new THREE.ConeGeometry(0.18, 0.35, 6);
+    const rooster = new THREE.Mesh(roosterGeo, vaneMat);
+    rooster.rotation.z = Math.PI / 2;
+    rooster.position.set(0, 7.5, 0);
+    barn.add(rooster);
+
+    // 7. Silo beside the barn
+    const siloBodyGeo = new THREE.CylinderGeometry(1.4, 1.4, 6.2, 16);
+    const siloBodyMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4 });
+    const siloBody = new THREE.Mesh(siloBodyGeo, siloBodyMat);
+    siloBody.position.set(5.2, 3.1, -1.2);
+    siloBody.castShadow = true;
+    siloBody.receiveShadow = true;
+    barn.add(siloBody);
+
+    const siloDomeGeo = new THREE.SphereGeometry(1.4, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.5);
+    const siloDomeMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.3 });
+    const siloDome = new THREE.Mesh(siloDomeGeo, siloDomeMat);
+    siloDome.position.set(5.2, 6.2, -1.2);
+    siloDome.castShadow = true;
+    barn.add(siloDome);
+
+    return barn;
+  }
+
+  /**
+   * Creates the Sheep Corral / Pen (O Aprisco das Ovelhinhas)
+   */
+  public static createCorral(radius: number = 7.0): {
+    root: THREE.Group;
+    deliveryZone: THREE.Mesh;
+  } {
+    const root = new THREE.Group();
+
+    // 1. Hay / Straw Ground Pad
+    const hayGeo = new THREE.CylinderGeometry(radius * 0.95, radius * 1.05, 0.08, 28);
+    const hayMat = new THREE.MeshStandardMaterial({
+      color: 0xfde047,
+      roughness: 0.9
+    });
+    const hayMesh = new THREE.Mesh(hayGeo, hayMat);
+    hayMesh.position.y = 0.04;
+    hayMesh.receiveShadow = true;
+    root.add(hayMesh);
+
+    // 2. Wooden Fence surrounding the Corral with an open gate in front
+    const woodMat = new THREE.MeshStandardMaterial({ color: 0x854d0e, roughness: 0.75 });
+    const numPosts = 16;
+    const postGeo = new THREE.CylinderGeometry(0.12, 0.14, 1.2, 8);
+    const railGeo = new THREE.CylinderGeometry(0.06, 0.06, (Math.PI * 2 * radius) / numPosts, 8);
+
+    for (let i = 0; i < numPosts; i++) {
+      const angle = (i / numPosts) * Math.PI * 2;
+      // Leave posts open in the front (+Z) for the entrance gate!
+      const isGate = angle > Math.PI * 0.38 && angle < Math.PI * 0.62;
+
+      const px = Math.cos(angle) * radius;
+      const pz = Math.sin(angle) * radius;
+
+      // Posts
+      const post = new THREE.Mesh(postGeo, woodMat);
+      post.position.set(px, 0.6, pz);
+      post.castShadow = true;
+      root.add(post);
+
+      // Horizontal rails between posts (skip at gate entrance)
+      if (!isGate) {
+        const nextAngle = ((i + 1) / numPosts) * Math.PI * 2;
+        const nextIsGate = nextAngle > Math.PI * 0.38 && nextAngle < Math.PI * 0.62;
+        if (!nextIsGate) {
+          const nextPx = Math.cos(nextAngle) * radius;
+          const nextPz = Math.sin(nextAngle) * radius;
+          const midX = (px + nextPx) / 2;
+          const midZ = (pz + nextPz) / 2;
+          const chordDist = Math.hypot(nextPx - px, nextPz - pz) * 1.05;
+          const railGeo = new THREE.BoxGeometry(chordDist, 0.1, 0.06);
+
+          // Top rail
+          const rail1 = new THREE.Mesh(railGeo, woodMat);
+          rail1.position.set(midX, 0.85, midZ);
+          rail1.rotation.y = -Math.atan2(nextPz - pz, nextPx - px);
+          rail1.castShadow = true;
+          root.add(rail1);
+
+          // Lower rail
+          const rail2 = rail1.clone();
+          rail2.position.y = 0.45;
+          root.add(rail2);
+        }
+      }
+    }
+
+    // 3. Wooden Signpost at the Gate ("APRISCO DO BOM PASTOR")
+    const signGroup = new THREE.Group();
+    const signPost1 = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 2.5, 8), woodMat);
+    signPost1.position.set(-1.8, 1.25, radius);
+    const signPost2 = signPost1.clone();
+    signPost2.position.x = 1.8;
+    signGroup.add(signPost1, signPost2);
+
+    // Arch board
+    const boardGeo = new THREE.BoxGeometry(4.0, 0.65, 0.14);
+    const board = new THREE.Mesh(boardGeo, woodMat);
+    board.position.set(0, 2.3, radius);
+    board.castShadow = true;
+    signGroup.add(board);
+
+    // Canvas texture for the sign
+    const signCvs = document.createElement('canvas');
+    signCvs.width = 512;
+    signCvs.height = 128;
+    const sCtx = signCvs.getContext('2d')!;
+    sCtx.fillStyle = '#78350f';
+    sCtx.fillRect(0, 0, 512, 128);
+    sCtx.strokeStyle = '#fef08a';
+    sCtx.lineWidth = 8;
+    sCtx.strokeRect(6, 6, 500, 116);
+    sCtx.font = 'bold 36px "Fredoka", sans-serif';
+    sCtx.fillStyle = '#ffffff';
+    sCtx.textAlign = 'center';
+    sCtx.textBaseline = 'middle';
+    sCtx.fillText('🏡 APRISCO DO BOM PASTOR 🐑', 256, 64);
+
+    const signTex = new THREE.CanvasTexture(signCvs);
+    const signPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.8, 0.55),
+      new THREE.MeshBasicMaterial({ map: signTex })
+    );
+    signPlane.position.set(0, 2.3, radius + 0.08);
+    signGroup.add(signPlane);
+    root.add(signGroup);
+
+    // 4. Water trough inside
+    const troughGeo = new THREE.BoxGeometry(2.0, 0.45, 0.9);
+    const troughMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.7 });
+    const trough = new THREE.Mesh(troughGeo, troughMat);
+    trough.position.set(-2.8, 0.23, -1.5);
+    trough.castShadow = true;
+    root.add(trough);
+
+    const waterGeo = new THREE.PlaneGeometry(1.8, 0.75);
+    const waterMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      roughness: 0.1,
+      metalness: 0.5,
+      transparent: true,
+      opacity: 0.9
+    });
+    const water = new THREE.Mesh(waterGeo, waterMat);
+    water.rotation.x = -Math.PI / 2;
+    water.position.set(-2.8, 0.44, -1.5);
+    root.add(water);
+
+    // 5. Glowing Welcome Delivery Beacon at the gate
+    const deliveryZoneGeo = new THREE.RingGeometry(1.6, 2.4, 32);
+    const deliveryZoneMat = new THREE.MeshBasicMaterial({
+      color: 0x4ade80,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.65
+    });
+    const deliveryZone = new THREE.Mesh(deliveryZoneGeo, deliveryZoneMat);
+    deliveryZone.rotation.x = -Math.PI / 2;
+    deliveryZone.position.set(0, 0.06, radius);
+    root.add(deliveryZone);
+
+    return { root, deliveryZone };
+  }
+
+  /**
+   * Creates stylized Cartoon Trees (Oak, Apple, Pine)
+   */
+  public static createTree(type: 'oak' | 'apple' | 'pine' = 'oak'): THREE.Group {
+    const tree = new THREE.Group();
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.8 });
+
+    if (type === 'pine') {
+      const trunkGeo = new THREE.CylinderGeometry(0.2, 0.35, 1.8, 8);
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.y = 0.9;
+      trunk.castShadow = true;
+      tree.add(trunk);
+
+      const pineMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.6 });
+      const cones = [
+        [1.8, 1.8, 1.4],
+        [2.8, 1.4, 1.3],
+        [3.8, 1.0, 1.2]
+      ];
+      cones.forEach(([y, r, h]) => {
+        const coneGeo = new THREE.ConeGeometry(r, h, 8);
+        const cone = new THREE.Mesh(coneGeo, pineMat);
+        cone.position.y = y;
+        cone.castShadow = true;
+        cone.receiveShadow = true;
+        tree.add(cone);
+      });
+      return tree;
+    }
+
+    // Oak / Apple Tree
+    const trunkGeo = new THREE.CylinderGeometry(0.3, 0.45, 2.2, 10);
+    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+    trunk.position.y = 1.1;
+    trunk.castShadow = true;
+    tree.add(trunk);
+
+    const foliageMat = new THREE.MeshStandardMaterial({
+      color: type === 'apple' ? 0x22c55e : 0x16a34a,
+      roughness: 0.7
+    });
+
+    const spheres = [
+      [0, 2.6, 0, 1.4],
+      [0.8, 2.3, 0.4, 1.0],
+      [-0.8, 2.4, -0.3, 1.0],
+      [0.2, 3.2, -0.2, 1.1]
+    ];
+    spheres.forEach(([sx, sy, sz, sr]) => {
+      const geo = new THREE.SphereGeometry(sr, 12, 12);
+      const m = new THREE.Mesh(geo, foliageMat);
+      m.position.set(sx, sy, sz);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      tree.add(m);
+    });
+
+    if (type === 'apple') {
+      const appleMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.3 });
+      const appleGeo = new THREE.SphereGeometry(0.12, 8, 8);
+      const appleOffsets = [
+        [0.7, 2.1, 0.9], [-0.6, 2.3, 0.8], [0.1, 2.0, 1.2],
+        [-0.8, 2.1, -0.7], [0.8, 2.4, -0.7]
+      ];
+      appleOffsets.forEach(([ax, ay, az]) => {
+        const apple = new THREE.Mesh(appleGeo, appleMat);
+        apple.position.set(ax, ay, az);
+        apple.castShadow = true;
+        tree.add(apple);
+      });
+    }
+
+    return tree;
+  }
+
+  /**
+   * Creates colorful 3D Flowers
+   */
+  public static createFlower(petalColor: number = 0xf43f5e): THREE.Group {
+    const flower = new THREE.Group();
+
+    // Stem
+    const stemGeo = new THREE.CylinderGeometry(0.025, 0.03, 0.4, 6);
+    const stemMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.8 });
+    const stem = new THREE.Mesh(stemGeo, stemMat);
+    stem.position.y = 0.2;
+    flower.add(stem);
+
+    // Center
+    const centerGeo = new THREE.SphereGeometry(0.08, 8, 8);
+    const centerMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.5 });
+    const center = new THREE.Mesh(centerGeo, centerMat);
+    center.position.y = 0.42;
+    flower.add(center);
+
+    // 5 Petals
+    const petalGeo = new THREE.SphereGeometry(0.065, 8, 8);
+    const petalMat = new THREE.MeshStandardMaterial({ color: petalColor, roughness: 0.6 });
+    for (let i = 0; i < 5; i++) {
+      const angle = (i / 5) * Math.PI * 2;
+      const petal = new THREE.Mesh(petalGeo, petalMat);
+      petal.position.set(Math.cos(angle) * 0.12, 0.42, Math.sin(angle) * 0.12);
+      petal.scale.set(1.1, 0.4, 1.1);
+      flower.add(petal);
+    }
+
+    return flower;
+  }
+
+  /**
+   * Creates the 3D Floating Guide Arrow
+   */
+  public static createGuideArrow(): THREE.Group {
+    const group = new THREE.Group();
+
+    // Arrow Cone Point
+    const coneGeo = new THREE.ConeGeometry(0.4, 0.7, 12);
+    const arrowMat = new THREE.MeshStandardMaterial({
+      color: 0xfacc15,
+      emissive: 0xeab308,
+      emissiveIntensity: 0.5,
+      roughness: 0.2,
+      metalness: 0.6
+    });
+    const cone = new THREE.Mesh(coneGeo, arrowMat);
+    cone.rotation.x = Math.PI / 2; // Point forward
+    cone.position.z = 0.5;
+    cone.castShadow = true;
+    group.add(cone);
+
+    // Arrow Shaft
+    const shaftGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.65, 12);
+    const shaft = new THREE.Mesh(shaftGeo, arrowMat);
+    shaft.rotation.x = Math.PI / 2;
+    shaft.position.z = -0.05;
+    shaft.castShadow = true;
+    group.add(shaft);
+
+    return group;
   }
 
   /**

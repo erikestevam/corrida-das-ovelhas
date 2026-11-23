@@ -2,7 +2,7 @@ import { Game3D } from './game3d/Game3D';
 import { overlayUI } from './ui/OverlayUI';
 import './style.css';
 
-console.log('🐑 O Bom Pastor 3D: Corrida das Ovelhinhas v1.2 (3 Pistas, 1 Minuto, Áudio Neural)');
+console.log('🐑 O Bom Pastor: O Vale das Ovelhinhas (Mundo Aberto & Stick Mobile)');
 
 // Auto-reload immediately when a new Service Worker deployment is activated
 if ('serviceWorker' in navigator) {
@@ -15,13 +15,12 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Initialize the 100% 3D Game Engine (Three.js WebGL with Soft Shadows)
+// Inicializa o motor 3D em mundo aberto
 const game3D = new Game3D('game-container');
 game3D.start();
 
-// Connect HTML / Motion UI with the 3D Game Engine
+// Conecta a UI HTML/Motion ao motor 3D
 overlayUI.init(
   () => game3D.startGame(),
-  () => game3D.restartGame(),
-  () => game3D.toggleCameraMode()
+  () => game3D.restartGame()
 );

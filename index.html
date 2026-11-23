@@ -6,13 +6,13 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <title>O Bom Pastor: Corrida das Ovelhinhas</title>
+    <title>O Bom Pastor: O Vale das Ovelhinhas</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#4ade80" />
-    <!-- Google Fonts: Fredoka & Baloo 2 for child-friendly bubbly typography -->
+    <!-- Google Fonts: Fredoka & Baloo 2 para tipografia infantil fofa -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -22,36 +22,44 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <!-- Game Viewport for Phaser -->
+    <!-- 3D WebGL Canvas Viewport -->
     <div id="game-container"></div>
 
     <!-- HTML / Motion UI Overlay -->
     <div id="ui-container">
-      <!-- Top HUD Header (Active during gameplay) -->
+      <!-- Top HUD Header (Ativo durante o jogo) -->
       <header id="top-hud" class="hud hidden">
         <div class="hud-left">
           <div class="sheep-counter-pill">
             <span class="sheep-icon-pill">🐑</span>
-            <span id="hud-sheep-count" class="hud-number">0</span>
+            <span id="hud-sheep-count" class="hud-number">0 / 10</span>
           </div>
-          <div class="timer-pill">
-            <span class="timer-icon-pill">⏱️</span>
-            <span id="hud-timer" class="hud-number">01:00</span>
-          </div>
-        </div>
-        <div class="hud-right">
           <div class="star-pill">
             <span class="star-icon-pill">⭐</span>
             <span id="hud-star-count" class="hud-number">0</span>
           </div>
-          <button id="btn-camera-toggle" class="btn-icon" aria-label="Mudar Câmera" title="Mudar Câmera (3ª Pessoa / 2.5D)">
-            <span id="camera-icon">🏎️</span>
-          </button>
+        </div>
+
+        <!-- Bússola e Guia Direcional Amigável -->
+        <div class="hud-center">
+          <div id="hud-guide-pill" class="guide-pill to-sheep">
+            <span id="hud-guide-icon">📍</span>
+            <span id="hud-guide-text">Encontre a ovelhinha!</span>
+          </div>
+        </div>
+
+        <div class="hud-right">
           <button id="btn-audio-toggle" class="btn-icon" aria-label="Alternar Som" title="Som">
             <span id="audio-icon">🔊</span>
           </button>
         </div>
       </header>
+
+      <!-- Toast Flutuante de Encontro da Ovelha -->
+      <div id="toast-notification" class="toast-notification hidden">
+        <span class="toast-icon">🐑✨</span>
+        <span id="toast-text">Você achou a ovelhinha!</span>
+      </div>
 
       <!-- Start Screen Overlay -->
       <section id="start-screen" class="overlay-screen active">
@@ -59,53 +67,58 @@
           <div class="sun-header-badge">☀️</div>
           <h1 class="game-title">
             <span class="title-sub">O BOM PASTOR</span>
-            <span class="title-main">Corrida das Ovelhinhas! 🐑🌈</span>
+            <span class="title-main">O Vale das Ovelhinhas! 🐑🏡</span>
           </h1>
           <p class="game-subtitle">
-            Arraste para os lados para pegar as ovelhinhas, estrelas e desviar das pedras!
+            Explore o vale em mundo aberto, encontre cada ovelhinha perdida e leve-a com amor de volta para a fazenda!
           </p>
           <div class="play-btn-wrapper">
-            <button id="btn-play" class="btn-giant-play" aria-label="Começar a Correr">
+            <button id="btn-play" class="btn-giant-play" aria-label="Começar Aventura">
               <span class="play-icon">▶</span>
-              <span class="play-text">JOGAR!</span>
+              <span class="play-text">JOGAR AGORA!</span>
             </button>
           </div>
           <div class="start-tip">
-            <span>✨ 3 Pistas • 1 Minuto de Diversão • Arraste para Desviar ✨</span>
+            <span>🎮 Setas do teclado no PC • Stick analógico no celular 🕹️</span>
           </div>
         </div>
       </section>
 
-      <!-- 3, 2, 1, JÁ! Countdown Overlay -->
-      <div id="countdown-overlay" class="countdown-overlay hidden">
-        <div id="countdown-text" class="countdown-bounce">3</div>
-      </div>
-
-      <!-- Giant Sheep Number Pop-up -->
+      <!-- Giant Sheep Number Pop-up ao Entregar na Fazenda -->
       <div id="number-popup-container" class="number-popup-container hidden">
         <div id="number-popup-card" class="number-popup-card">
           <span id="number-popup-digit" class="number-popup-digit">1</span>
-          <span id="number-popup-label" class="number-popup-label">Ovelhinha!</span>
+          <span id="number-popup-label" class="number-popup-label">Ovelhinha Salva! 🐑</span>
         </div>
       </div>
 
-      <!-- Inactivity Finger Guide (Assistance for toddler) -->
-      <div id="inactivity-guide" class="inactivity-guide hidden">
-        <div class="finger-pointer-wrapper">
-          <div class="ripple-ring"></div>
-          <div class="finger-icon">👈👉</div>
+      <!-- Controles Virtuais Touch (Mobile-first: Stick analógico + Pulo) -->
+      <div id="touch-controls" class="touch-controls hidden">
+        <!-- Stick Analógico Virtual -->
+        <div id="touch-joystick-zone" class="joystick-zone">
+          <div id="joystick-base" class="joystick-base">
+            <div id="joystick-knob" class="joystick-knob"></div>
+          </div>
+          <div class="joystick-hint">🕹️ Mover</div>
         </div>
-        <div class="finger-bubble">Arraste para os lados!</div>
+
+        <!-- Botão de Pulo -->
+        <div class="touch-action-zone">
+          <button id="btn-touch-jump" class="btn-touch-jump" aria-label="Pular">
+            <span class="jump-icon">🦘</span>
+            <span class="jump-text">PULAR</span>
+          </button>
+        </div>
       </div>
 
-      <!-- Victory Celebration Screen -->
+      <!-- Victory Celebration Screen (Ao salvar as 10 ovelhinhas) -->
       <section id="victory-screen" class="overlay-screen hidden">
         <div class="victory-card">
           <div class="victory-crown">👑</div>
-          <h2 class="victory-title">TEMPO ESGOTADO! 🎉</h2>
+          <h2 class="victory-title">PARABÉNS! 🎉</h2>
           <p class="victory-praise">
-            Você resgatou <strong id="victory-sheep-count">0</strong> ovelhinhas e pegou <strong id="victory-star-count">0</strong> estrelas!<br />
-            <strong>O Bom Pastor está muito orgulhoso de você!</strong>
+            Você resgatou todas as <strong id="victory-sheep-count">10</strong> ovelhinhas e coletou <strong id="victory-star-count">0</strong> estrelas!<br />
+            <strong>O Bom Pastor está radiante de alegria com você!</strong>
           </p>
           <div class="victory-sheep-parade">
             <span class="parade-sheep s1">🐑</span>
@@ -119,7 +132,7 @@
           </div>
           <button id="btn-restart" class="btn-giant-play victory-btn">
             <span class="play-icon">🔁</span>
-            <span class="play-text">CORRER DE NOVO!</span>
+            <span class="play-text">JOGAR NOVAMENTE!</span>
           </button>
         </div>
       </section>
